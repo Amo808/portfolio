@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="ru" data-lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Forward Deployed AI Engineer · AI Automation · Full-stack. Кейсы, скриншоты и видео работающих AI-систем.">
+<meta property="og:title" content="Амирбек Почобеков, Forward Deployed AI Engineer">
+<meta property="og:description" content="AI-агенты, интеграции и продакшн: кейсы, скрины и видео.">
+<meta property="og:image" content="shots/sb-variants.jpg">
+<meta name="robots" content="noindex">
+<title>Амирбек Почобеков, AI Engineer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dark product-site look; one column; cases as field reports with full-width screenshots */
+:root{
+  --paper:#0b0d11; --surface:#12151b; --raise:#171b22; --ink:#e9ecf1; --muted:#98a1ad; --line:#232833;
+  --accent:#6ea8ff; --signal:#7dd3c0; --chip:#1a1f28; color-scheme:dark;
+  --display:"Geist",ui-sans-serif,system-ui,sans-serif;
+  --body:"Geist",ui-sans-serif,system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 var(--body);padding-inline:20px;padding-block:0 64px}
+.wrap{max-width:1000px;margin:0 auto}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bar{display:flex;justify-content:space-between;align-items:center;padding-block:20px;gap:12px}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
+.lang button{border:0;background:none;color:var(--muted);font:500 13px var(--mono);padding:6px 14px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:#0b0d11}
+html[data-lang="en"] [lang="ru"],html:not([data-lang="en"]) [lang="en"]{display:none}
+header.hero{padding-block:36px 32px;display:grid;gap:20px}
+.hero h1{font-size:clamp(40px,7vw,80px);font-weight:700;letter-spacing:-.045em}
+.hero{background:radial-gradient(60% 80% at 85% 0%,rgba(110,168,255,.14),transparent 70%)}
+.hero .role{font:600 clamp(18px,2.4vw,24px)/1.3 var(--display);color:var(--accent)}
+.hero p.lead{max-width:64ch;font-size:18px;margin:0}
+.contacts{display:flex;flex-wrap:wrap;gap:10px}
+.contact{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 8px 6px 14px;font:14px var(--mono)}
+.contact button{border:0;background:var(--chip);color:var(--ink);border-radius:999px;padding:3px 10px;font:12px var(--mono);cursor:pointer}
+.pipe{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 16px;overflow-x:auto}
+.pipe ol{list-style:none;margin:0;padding:0;display:flex;gap:8px;align-items:center;white-space:nowrap;font:13px var(--mono)}
+.pipe li{padding:6px 10px;border-radius:6px;background:var(--chip)}
+.pipe li.arrow{background:none;color:var(--muted);padding:0}
+.pipe li.hot{background:var(--accent);color:#0b0d11}
+.pipe small{display:block;margin-top:8px;color:var(--muted);font:12px var(--body)}
+section{padding-block:40px;border-top:1px solid var(--line)}
+section>h2{font-size:clamp(26px,3.6vw,38px);font-weight:700;letter-spacing:-.03em;margin-block:8px 24px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stat b{display:block;font:700 34px/1 var(--display);letter-spacing:-.03em;color:var(--accent);font-variant-numeric:tabular-nums;margin-bottom:6px}
+.stat span{color:var(--muted);font-size:14px}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.how h3{font-size:17px;margin-bottom:6px}
+.how p{margin:0;color:var(--muted);font-size:15px}
+.case{display:grid;grid-template-columns:170px minmax(0,1fr);gap:24px;padding-block:28px;border-bottom:1px dashed var(--line)}
+.case:last-child{border-bottom:0}
+.case .meta{font:13px/1.5 var(--mono);color:var(--muted);display:grid;gap:6px;align-content:start}
+.case .meta .org{color:var(--signal);font-weight:500}
+.case h3{font-size:22px;font-weight:700;margin-bottom:10px}
+.case p{margin:0 0 10px;max-width:70ch}
+.pdr{display:grid;gap:8px;margin:0 0 12px;max-width:72ch}
+.pdr div{display:grid;grid-template-columns:92px minmax(0,1fr);gap:12px}
+.pdr dt{font:500 12px/1.9 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.pdr dd{margin:0}
+.pdr .res dd{font-weight:600}
+.pdr .res dt{color:var(--signal)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{font:12px var(--mono);background:var(--chip);padding:3px 8px;border-radius:4px}
+figure{margin:16px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--raise);box-shadow:0 20px 50px -30px rgba(0,0,0,.8)}
+figure img,figure video{display:block;width:100%;height:auto}
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.duo figure{margin:0}
+figcaption{font-size:13px;color:var(--muted);padding:8px 12px;border-top:1px solid var(--line)}
+.wow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wow>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+@media (max-width:700px){.wow{grid-template-columns:1fr}}
+.wow h3{font-size:18px;margin-bottom:4px}
+.wow .who{display:block;font:500 12px var(--mono);color:var(--signal);margin-bottom:8px}
+.wow p{margin:0;color:var(--muted);font-size:15px}
+.lab{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.lab div{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:16px}
+.lab h3{font-size:17px;margin-bottom:6px}
+.lab p{margin:0;color:var(--muted);font-size:15px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.cols h3{font-size:17px;margin-bottom:8px}
+.cols p{margin:0;color:var(--muted);font-size:15px}
+.xp{display:grid;gap:14px}
+.xp>div{display:grid;grid-template-columns:170px minmax(0,1fr);gap:24px}
+.xp .when{font:13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.xp b{font-weight:600}
+.xp p{margin:2px 0 0;color:var(--muted);font-size:15px}
+footer{padding-block:32px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:640px){.case,.xp>div{grid-template-columns:1fr;gap:8px}.pdr div{grid-template-columns:1fr;gap:0}}
+@media (prefers-reduced-motion:no-preference){.pipe li.hot{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{opacity:.75}}}
+@media print{
+  :root{--paper:#fff;--surface:#fff;--ink:#111;--muted:#444;--line:#ccc;--chip:#eef0f6;color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:14mm 12mm}
+  body{padding:0;font-size:11pt}
+  .lang,.contact button,.pipe li.hot{animation:none}
+  .lang,.contact button{display:none}
+  header.hero{padding-block:0 12px}
+  section{padding-block:16px}
+  .case,.lab div,.xp>div,.stat,.how>div{break-inside:avoid}
+  figure,.duo,.pipe,.noprint{display:none!important}
+  body{font-size:10pt;line-height:1.45}
+  .hero h1{font-size:28pt}
+  .hero .role{font-size:13pt}
+  .hero p.lead{font-size:10.5pt}
+  .contact{padding:2px 8px;font-size:9pt}
+  section>h2{font-size:15pt;margin-block:2px 10px}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .stat{padding:8px}.stat b{font-size:16pt}.stat span{font-size:тысячиpt}
+  .case{grid-template-columns:120px 1fr;gap:14px;padding-block:10px}
+  .case h3{font-size:12.5pt;margin-bottom:4px}
+  .pdr{gap:3px;margin-bottom:6px}.pdr div{grid-template-columns:78px 1fr}
+  .tags span{font-size:8pt;padding:1px 6px}
+  .xp>div{grid-template-columns:120px 1fr;gap:14px}.xp p{font-size:9.5pt}
+  .wow{grid-template-columns:repeat(2,1fr);break-inside:avoid}.wow div{padding:8px;break-inside:avoid}.wow h3{font-size:11pt}.wow p{font-size:9pt}
+  .lab{grid-template-columns:repeat(3,1fr);gap:8px}.lab div{padding:8px}.lab p{font-size:9pt}
+  .cols{grid-template-columns:repeat(3,1fr);gap:10px}.cols p{font-size:9pt}
+  h2,h3,.eyebrow{break-after:avoid}
+  section>.eyebrow,section>h2{break-inside:avoid}
+  .lab,.cols,.stats{break-inside:avoid}
+  a{color:var(--ink);text-decoration:none}
+}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<div class="wrap">
+<div class="bar">
+  <span class="eyebrow"><span lang="ru">Бангкок · удалённо · RU / EN B2</span><span lang="en">Bangkok · remote · RU / EN B2</span></span>
+  <div class="lang" role="group" aria-label="Language"><button type="button" id="l-ru" data-l="ru">RU</button><button type="button" id="l-en" data-l="en">EN</button></div>
+</div>
+
+<header class="hero">
+  <h1><span lang="ru">Амирбек Почобеков</span><span lang="en">Amirbek Pochobekov</span></h1>
+  <div class="role">Forward Deployed AI Engineer · AI Automation · Full-stack</div>
+  <p class="lead" lang="ru">Встраиваюсь в бизнес, нахожу, где люди теряют часы, и довожу AI до работающей системы в инструментах, которыми команда уже пользуется: мессенджеры и почта (WhatsApp, Telegram, helpdesk), платежи (Stripe, PayPal), CRM и ATS, системы бронирования. Сам пишу агентов, интеграции, чат-ботов и панели для менеджеров, eval-гейт и деплой в Kubernetes. Потом меряю результат цифрами и отдаю команде систему, которой можно управлять без меня.</p>
+  <p class="lead" lang="en">I embed with a business, find where people lose hours, and take AI all the way to a running system inside the tools the team already uses: messengers and email (WhatsApp, Telegram, helpdesk), payments (Stripe, PayPal), CRM and ATS, booking systems. I build the agents, integrations, chatbots and manager dashboards, the eval gate and the Kubernetes deploy myself, then measure the result and hand the team a system they can run without me.</p>
+  <div class="contacts">
+    <span class="contact">therealclock@gmail.com <button type="button" data-copy="therealclock@gmail.com">copy</button></span>
+    <span class="contact">Telegram @gwuappo <button type="button" data-copy="@gwuappo">copy</button></span>
+    <span class="contact">+66 61 623 2810 <button type="button" data-copy="+66616232810">copy</button></span>
+    <span class="contact"><a href="cv/Pochobekov_Amirbek_CV_RU.pdf" lang="ru">Резюме PDF</a><a href="cv/Pochobekov_Amirbek_CV_EN.pdf" lang="en">CV PDF</a>&nbsp;</span>
+  </div>
+  <div class="pipe">
+    <ol>
+      <li>WhatsApp · Telegram · email</li><li class="arrow">→</li>
+      <li>PII gate</li><li class="arrow">→</li>
+      <li class="hot">LLM agent + hybrid RAG</li><li class="arrow">→</li>
+      <li>Stripe · CRM · ATS · PMS</li><li class="arrow">→</li>
+      <li>chatbot + manager UI</li><li class="arrow">→</li>
+      <li>eval gate</li><li class="arrow">→</li>
+      <li>k8s release</li>
+    </ol>
+    <small lang="ru">Форма почти каждой системы ниже: реальный канал на входе, персональные данные вырезаны до модели, инструменты действуют в настоящих системах, человек подтверждает рискованное, регрессия проверяется до релиза.</small>
+    <small lang="en">The shape of most systems below: a real channel in, personal data removed before the model, tools that act on real systems, a human confirming risky actions, regression checked before release.</small>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow"><span lang="ru">Демо</span><span lang="en">Demo</span></div>
+  <h2><span lang="ru">Работающие системы за 80 секунд</span><span lang="en">Live systems in 80 seconds</span></h2>
+  <figure><video src="media/demo.mp4" poster="media/demo.jpg" controls muted playsinline preload="metadata" aria-label="Demo reel"></video><figcaption lang="ru">Копилот поддержки, RAG-бот для отзывов, AI-найм, дашборд креативов, фабрика рекламных видео, маркетплейс. Тестовые данные.</figcaption><figcaption lang="en">Support copilot, review RAG bot, AI hiring, creative dashboard, ad-video factory, marketplace. Test data.</figcaption></figure>
+</section>
+
+<section>
+  <div class="eyebrow"><span lang="ru">Масштаб</span><span lang="en">Scale</span></div>
+  <h2><span lang="ru">Последние 12 месяцев</span><span lang="en">The last 12 months</span></h2>
+  <div class="stats">
+    <div class="stat"><b>100s/<span lang="ru">день</span><span lang="en">day</span></b><span lang="ru">тикетов обрабатывает мой бот поддержки, портфель приложений</span><span lang="en">support tickets handled by my bot across the app portfolio</span></div>
+    <div class="stat"><b>1 650+</b><span lang="ru">коммитов и MR в продакшн-системах двух компаний за 8 месяцев</span><span lang="en">commits and merge requests shipped to production systems at two companies in 8 months</span></div>
+    <div class="stat"><b>200+ MR</b><span lang="ru">в GitLab Featlica с июня 2026, большая часть в проде</span><span lang="en">in Featlica GitLab since June 2026, most in production</span></div>
+    <div class="stat"><b>12+</b><span lang="ru">AI-систем доведено до прода: поддержка, рекрутинг, отзывы, маркетинг, финансы, гостиничный бизнес</span><span lang="en">AI systems taken to production across support, hiring, reviews, marketing, finance and hospitality</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow"><span lang="ru">Фишки</span><span lang="en">Highlights</span></div>
+  <h2><span lang="ru">Что я создал и внедрил</span><span lang="en">What I built and deployed</span></h2>
+  <div class="wow">
+    <div><h3><span lang="ru">AI-поддержка для портфеля приложений</span><span lang="en">AI support for an app portfolio</span></h3><span class="who">Команда поддержки Featlica</span><p lang="ru">Создал и внедрил мультиагентного бота, который закрывает первую линию: сотни писем в день, сам находит платёж, отменяет подписку, оформляет возврат или отдаёт сложный случай человеку. Бот не может написать «деньги вернули», если платёжка этого не подтверждает.</p><p lang="en">Built and deployed a multi-agent bot that runs first-line support: hundreds of emails a day, finds the payment, cancels, refunds or escalates. It cannot claim a refund the ledger didn't confirm.</p></div>
+    <div><h3><span lang="ru">Самообучающийся RAG-бот для команды ASO</span><span lang="en">Self-learning RAG bot for the ASO team</span></h3><span class="who">Команда ASO</span><p lang="ru">Создал и внедрил бота, который отвечает на отзывы в App Store и Google Play: AI пишет черновик по базе шаблонов, человек одобряет в Slack, бот публикует и учится на каждом одобренном ответе. Команда больше не пишет ответы вручную.</p><p lang="en">Built and deployed a bot that answers App Store and Google Play reviews: AI drafts from a template base, a person approves in Slack, the bot posts and learns from every approved reply.</p></div>
+    <div><h3><span lang="ru">AI-копилот для менеджеров поддержки</span><span lang="en">AI copilot for support managers</span></h3><span class="who">Менеджеры поддержки</span><p lang="ru">Создал рабочее место, где на одном экране письмо клиента, готовые варианты ответа с источниками, платежи и подписки. Кнопка «научить бота» превращает правку менеджера в знание бота, пилот оценивается по честной статистике.</p><p lang="en">Built a workspace with the customer email, ready answer variants with sources, payments and subscriptions on one screen; “teach the bot” turns a manager's fix into bot knowledge.</p></div>
+    <div><h3><span lang="ru">Автоматическая защита от чарджбэков</span><span lang="en">Automated chargeback defence</span></h3><span class="who">Финансы и поддержка</span><p lang="ru">Создал систему, которая сама собирает доказательства по спорным платежам в Stripe и PayPal: условия, чеки, переписку, историю подписки. До сотни и более споров в день, человек только нажимает «Отправить» в Slack.</p><p lang="en">Built a system that assembles Stripe and PayPal dispute evidence itself: terms, receipts, conversation, subscription history. 100+ disputes a day; a person only clicks “Submit” in Slack.</p></div>
+    <div><h3><span lang="ru">AI-консьерж для гостей отелей</span><span lang="en">AI concierge for hotel guests</span></h3><span class="who">Управляющая компания на Пхукете</span><p lang="ru">Создал и внедрил бота, который 24/7 отвечает гостям в WhatsApp, Telegram и Max на четырёх языках, принимает заказы услуг и передаёт проблемы менеджеру. Персональные данные гостей вырезаются до того, как текст попадает в AI.</p><p lang="en">Built and deployed a 24/7 guest bot on WhatsApp, Telegram and Max in four languages that takes service orders and routes problems to managers; guest personal data is stripped before any AI call.</p></div>
+    <div><h3><span lang="ru">Ночная AI-команда разработки</span><span lang="en">An overnight AI dev team</span></h3><span class="who">Разработка Yario</span><p lang="ru">Построил систему, где AI-агент ночью берёт задачу, делает её и открывает PR, а второй агент независимо проверяет результат. Утром человек только смотрит и мержит. Каждая задача проверяется на своём стенде с видео автотеста, поэтому ложных «всё проверено» нет.</p><p lang="en">Built a system where an AI agent takes a task overnight and opens a PR, and a second agent verifies it independently; a human reviews and merges in the morning. Every task is checked on its own stand with a test video.</p></div>
+    <div><h3><span lang="ru">Автотесты для AI перед каждым релизом</span><span lang="en">Automated AI tests before every release</span></h3><span class="who">Поддержка и разработка Featlica</span><p lang="ru">Построил систему, которая перед релизом прогоняет бота по корпусу реальных кейсов, а модель-судья оценивает каждый ответ. Доказал, что один прогон врёт из-за шума модели, и ввёл медиану трёх прогонов с порогами. Проверка, которая занимала дни ручного чтения, теперь идёт минуты, а кейсы добавляют сами менеджеры в таблице.</p><p lang="en">Built a system that replays the bot on a corpus of real cases before each release while a judge model scores every answer. Showed single runs lie from model noise and introduced a median of three with thresholds. Days of manual reading became minutes, and managers add cases themselves in a sheet.</p></div>
+    <div><h3><span lang="ru">AI-система найма</span><span lang="en">AI hiring system</span></h3><span class="who">HR-команда</span><p lang="ru">Создал систему найма, которая собирает кандидатов из LinkedIn, hh, почты и файлов в одну базу, убирает дубли, ставит AI-балл под вакансию и ведёт переписку в одной ленте. Выдерживает тысячи кандидатов и проходит проверку на предвзятость по EU AI Act.</p><p lang="en">Built an ATS that pulls candidates from LinkedIn, hh, email and files into one base, dedupes, AI-scores against the role and keeps one conversation thread. Handles thousands of candidates and passes an EU AI Act bias check.</p></div>
+    <div><h3><span lang="ru">Из Google-таблицы, в продукт для аналитиков</span><span lang="en">From a Google Sheet to an analytics product</span></h3><span class="who">UA-команда (закупка трафика)</span><p lang="ru">Команда вела победителей среди рекламных креативов вручную в таблице. Я превратил её в полноценный дашборд: статус «победил / проиграл» ставится сам по данным BI, есть фильтры, роли (кто-то видит KPI без денег) и вход через SSO. Таблица продолжает работать: изменения синхронизируются в обе стороны, привычный процесс команды не сломался.</p><p lang="en">The team tracked winning ad creatives by hand in a sheet. I turned it into a full dashboard: won/lost set automatically from BI data, filters, roles (some see KPIs without money) and SSO. The sheet keeps working with two-way sync, so the team's habits didn't break.</p></div>
+    <div><h3><span lang="ru">AI-фабрика рекламных креативов</span><span lang="en">AI factory for ad creatives</span></h3><span class="who">Маркетинг приложений</span><p lang="ru">Построил конвейеры, которые по команде в Slack сами генерируют рекламные видео 9:16: картинка, видео, поющий аватар, музыка и монтаж. Ролики уходили в платную рекламу приложений, без съёмок и монтажёра.</p><p lang="en">Built pipelines that generate 9:16 ad videos from a Slack command: image, video, singing avatar, music and editing. The videos went into paid app advertising with no shoots or editor.</p></div>
+    <div><h3><span lang="ru">Радар трендов для маркетинга</span><span lang="en">Trend radar for marketing</span></h3><span class="who">Маркетинг и креативы</span><p lang="ru">Создал систему, которая следит за TikTok, Instagram, YouTube, Reddit, X и Google Trends и сообщает о тренде в Slack до его пика. Вторая система разбирает рекламу конкурентов и группирует её по идеям.</p><p lang="en">Built a system that watches TikTok, Instagram, YouTube, Reddit, X and Google Trends and flags trends in Slack before they peak; a second one clusters competitor ads by concept.</p></div>
+  </div>
+</section>
+
+<section class="noprint">
+  <div class="eyebrow"><span lang="ru">Как я работаю</span><span lang="en">How I work</span></div>
+  <h2><span lang="ru">От проблемы до системы в проде</span><span lang="en">From a problem to a system in production</span></h2>
+  <div class="how">
+    <div><h3><span lang="ru">Сажусь рядом с операторами</span><span lang="en">Sit with the operators</span></h3><p lang="ru">Выгружаю реальные тикеты, считаю классы обращений и то, где теряются деньги и время. Решение начинается с данных, а не с модели.</p><p lang="en">I export real tickets, count request classes and find where money and time leak. The solution starts from data, not from a model.</p></div>
+    <div><h3><span lang="ru">Внедряю в их инструменты</span><span lang="en">Ship into their tools</span></h3><p lang="ru">Агент работает там, где уже живёт команда: мессенджеры, почта, Slack, CRM, ATS. Рискованное действие подтверждает человек.</p><p lang="en">The agent runs where the team already lives: messengers, email, Slack, CRM, ATS. A human confirms anything risky.</p></div>
+    <div><h3><span lang="ru">Меряю честно</span><span lang="en">Measure honestly</span></h3><p lang="ru">Eval-корпус, LLM-as-judge, медиана прогонов, доверительные интервалы на экране пилота. Пилот одобряют или останавливают по цифрам.</p><p lang="en">Eval corpus, LLM-as-judge, median of runs, confidence intervals on the pilot screen. A pilot is approved or stopped on numbers.</p></div>
+    <div><h3><span lang="ru">Отдаю управление</span><span lang="en">Hand over control</span></h3><p lang="ru">Корпус в Google Sheets, «научить бота» из письма, инструкции в интерфейсе. Команда меняет поведение без разработчика.</p><p lang="en">Corpus in Google Sheets, "teach the bot" from an email, instructions in the UI. The team changes behaviour without a developer.</p></div>
+  </div>
+</section>
+
+<section id="cases">
+  <div class="eyebrow"><span lang="ru">Кейсы</span><span lang="en">Case studies</span></div>
+  <h2><span lang="ru">Системы, которые я построил и веду</span><span lang="en">Systems I built and run</span></h2>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>2025 – <span lang="ru">н.в.</span><span lang="en">now</span></span><span lang="ru">владелец системы</span><span lang="en">system owner</span></div>
+    <div>
+      <h3><span lang="ru">AI-поддержка для портфеля потребительских приложений</span><span lang="en">AI support for a portfolio of consumer apps</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>Сотни писем в день по брендам портфеля, 92% из них про отмены и возвраты. Менеджеры вручную ищут платёж, подписку и историю.</dd></div>
+        <div><dt>Внедрил</dt><dd>Мультиагентного бота поверх Zendesk: классификация, поиск пользователя в платежах и Amplitude, отмена и возврат через платёжный API или эскалация. Центральный обработчик ошибок в Slack, страховки на отмены, лимиты эскалаций, режим «только черновик».</dd></div>
+        <div><dt>Нашёл</dt><dd>~130k статических токенов промпта на тикет и KB-инструмент, который не вызывался ни разу. Перестроил разделение промпта и RAG, база знаний переезжает на Postgres + pgvector.</dd></div>
+        <div><dt>Защита</dt><dd>Бот не может написать «деньги вернули», если платёжка этого не подтверждает; опасные обещания подсвечиваются в черновике на 15 языках. Суточный аудит возвратов нашёл, что в 31% тикетов терялась сама просьба клиента.</dd></div>
+        <div class="res"><dt>Результат</dt><dd>сотни тикетов в день без ручного разбора первичной линии.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>Hundreds of emails a day across all brands, 92% about cancels and refunds. Managers looked up payments, subscriptions and history by hand.</dd></div>
+        <div><dt>Deployed</dt><dd>A multi-agent bot on top of Zendesk: classification, user lookup in payments and Amplitude, cancel and refund through the payment API or escalation. Central error handler to Slack, cancellation safety nets, escalation limits, a draft-only mode.</dd></div>
+        <div><dt>Found</dt><dd>~130k static prompt tokens per ticket and a KB tool that was never called. Redesigned the prompt/RAG split; the knowledge base is moving to Postgres + pgvector.</dd></div>
+        <div><dt>Safety</dt><dd>The bot cannot say “refunded” unless the payment ledger confirms it; risky promises are highlighted in drafts across 15 languages. A daily refund audit found 31% of tickets were losing the customer's actual request.</dd></div>
+        <div class="res"><dt>Result</dt><dd>hundreds of tickets a day with no manual first-line triage.</dd></div>
+      </dl>
+      <div class="tags"><span>n8n</span><span>GPT-4o</span><span>RAG</span><span>pgvector</span><span>Zendesk</span><span>Stripe</span><span>Amplitude</span><span>Slack</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>Jun – Sep 2026</span><span lang="ru">основной автор · 99 MR</span><span lang="en">main author · 99 MRs</span></div>
+    <div>
+      <h3><span lang="ru">AI-копилот рабочего места менеджера</span><span lang="en">AI copilot workspace for support managers</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>То, что бот не должен отправлять сам, менеджер разбирал в Zendesk вслепую: без черновика, фактов о платеже и понимания, откуда ответ.</dd></div>
+        <div><dt>Внедрил</dt><dd>Один экран на тикет: черновик бота и варианты ответа с источниками, карточка фактов со ссылками на платёж, карточка клиента и история, шаблоны по слэшу. Кнопка «научить бота» превращает правку менеджера в проверенную запись базы знаний.</dd></div>
+        <div><dt>Поиск</dt><dd>Бот ищет ответ в базе знаний и по смыслу, и по точным словам одновременно, поэтому находит нужное даже в письмах на голландском, немецком, итальянском или польском.</dd></div>
+        <div class="res"><dt>Результат</dt><dd>Менеджер больше не собирает факты по трём системам вручную: всё нужное для решения на одном экране, а исправления сразу становятся знаниями бота. Экран пилота показывает честную статистику, и решение о раскатке принимают по цифрам.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>What the bot must not send alone, managers handled blind in Zendesk: no draft, no payment facts, no idea where an answer came from.</dd></div>
+        <div><dt>Deployed</dt><dd>One screen per ticket: the bot's draft and answer variants with sources, a fact card with payment links, customer card and history, slash templates. "Teach the bot" turns a manager's edit into a checked knowledge-base entry.</dd></div>
+        <div><dt>Search</dt><dd>The bot searches the knowledge base by meaning and by exact words at once, so it finds the right answer even in Dutch, German, Italian or Polish emails.</dd></div>
+        <div class="res"><dt>Result</dt><dd>Managers no longer collect facts from three systems by hand: everything needed for the decision is on one screen, and their corrections become the bot's knowledge. The pilot screen shows honest statistics, so rollout is decided on numbers.</dd></div>
+      </dl>
+      <div class="duo" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><figure><img src="shots/sb-real-money.jpg" alt="Real customer payments panel" loading="lazy"><figcaption lang="ru">Живой интерфейс: подписка и платёж клиента, отмена только через предпросмотр</figcaption><figcaption lang="en">Live UI: the customer's subscription and payment, cancel only via preview</figcaption></figure><figure><img src="shots/sb-real-botcheck.jpg" alt="What the bot checked" loading="lazy"><figcaption lang="ru">Что бот проверил: фраза «no further charges» помечена, платёжка этого не подтверждает</figcaption><figcaption lang="en">What the bot checked: “no further charges” is flagged, the ledger doesn't confirm it</figcaption></figure></div>
+      <figure><img src="shots/sb-real-ticket.jpg" alt="Live ticket screen" loading="lazy"><figcaption lang="ru">Живой экран тикета в песочнице. Данные клиента скрыты.</figcaption><figcaption lang="en">Live ticket screen in the sandbox. Customer data hidden.</figcaption></figure>
+      <div class="tags"><span>Go</span><span>Vue</span><span>TypeScript</span><span>Postgres</span><span>pgvector</span><span>RRF</span><span>GKE</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>2026</span><span>evals</span></div>
+    <div>
+      <h3><span lang="ru">Регрессионный гейт с LLM-as-judge</span><span lang="en">Regression gate with LLM-as-judge</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>Каждая правка промпта могла сломать ответы в другом бренде, а проверка шла днями вручную.</dd></div>
+        <div><dt>Внедрил</dt><dd>Симулятор: корпус кейсов в Google Sheets (менеджеры правят без редеплоя), прогон по брендам, судья-модель оценивает ответ как совпал / допустимо / разошёлся. Показал, что один прогон гуляет 82–91% от шума модели, и заменил его медианой трёх с порогами.</dd></div>
+        <div class="res"><dt>Результат</dt><dd>Проверка релиза за минуты, стабильная база 88%.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>Any prompt change could break answers for another brand, and checking took days by hand.</dd></div>
+        <div><dt>Deployed</dt><dd>A simulator: case corpus in Google Sheets (editable by managers without a redeploy), per-brand replay, a judge model scoring each answer as same / acceptable / diverged. Showed single runs swing 82–91% from model noise and replaced them with a median of three and fixed thresholds.</dd></div>
+        <div class="res"><dt>Result</dt><dd>Release check in minutes with a stable 88% baseline.</dd></div>
+      </dl>
+      <div class="tags"><span>LLM-as-judge</span><span>evals</span><span>Google Sheets</span><span>Slack</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Yario</span><span>Feb 2026 – <span lang="ru">н.в.</span><span lang="en">now</span></span><span lang="ru">один из ключевых разработчиков</span><span lang="en">one of the key developers</span></div>
+    <div>
+      <h3><span lang="ru">AI-консьерж для гостей аренды на Пхукете</span><span lang="en">AI guest concierge for rentals in Phuket</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>Гости пишут на русском, английском, китайском и тайском в WhatsApp и Telegram круглосуточно; управляющая компания не успевает.</dd></div>
+        <div><dt>Внедрил</dt><dd>Движок диалогов на Python + LangGraph вместо n8n (593 коммита, ~46% репозитория): QR-вход, выбор языка, меню услуг в лимитах WhatsApp, партнёрские сценарии вроде проката авто, перевод гость ↔ менеджер (DeepSeek + fallback OpenAI), понимание голосовых, фото, видео и PDF, самообучение на правках менеджеров. Ни одна эскалация больше не заканчивается тишиной: каждый путь доходит до человека.</dd></div>
+        <div><dt>Данные</dt><dd>PII-шлюз вырезает персональные данные до любого вызова LLM и эмбеддингов, fail-closed, с маршрутизацией EU/RU/TH.</dd></div>
+        <div class="res"><dt>Результат</dt><dd>4 языка в одном боте, три мессенджера, панель менеджера на 18 экранах RU/EN.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>Guests write in Russian, English, Chinese and Thai on WhatsApp and Telegram around the clock; the property manager can't keep up.</dd></div>
+        <div><dt>Deployed</dt><dd>A conversation engine on Python + LangGraph replacing n8n (593 commits, ~46% of the repo): QR entry, language choice, service menus within WhatsApp limits, partner flows such as car rental, guest ↔ manager translation (DeepSeek with OpenAI fallback), understanding of voice, photos, video and PDFs, learning from manager edits. No escalation ends in silence any more: every path reaches a human.</dd></div>
+        <div><dt>Data</dt><dd>A PII gateway strips personal data before any LLM or embedding call, fail-closed, with EU/RU/TH routing.</dd></div>
+        <div class="res"><dt>Result</dt><dd>4 languages in one bot, three messengers, an 18-screen RU/EN manager dashboard.</dd></div>
+      </dl>
+      <figure><img src="shots/yl-tester.jpg" alt="Yario bot tester: WhatsApp booking dialog" loading="lazy"><figcaption lang="ru">Тестер бота: гость хочет забронировать виллу, бот уточняет страну и даёт кнопки. Ответ за ~6 с через реальный API.</figcaption><figcaption lang="en">Bot tester: a guest wants to book a villa, the bot asks for the country with buttons. Reply in ~6 s via the real API.</figcaption></figure>
+      <div class="duo"><figure><img src="shots/yl-menu.jpg" alt="Guest menu builder after QR scan" loading="lazy"><figcaption lang="ru">Конструктор меню после скана QR: каналы WhatsApp и Telegram, разделы услуг, гостевой эмулятор</figcaption><figcaption lang="en">Guest menu builder after a QR scan: WhatsApp and Telegram channels, service sections, guest emulator</figcaption></figure><figure><img src="shots/yl-overview.jpg" alt="Operations overview" loading="lazy"><figcaption lang="ru">Операционка аккаунта: тикеты, проживание, бронирования, выручка</figcaption><figcaption lang="en">Account operations: tickets, stays, bookings, revenue</figcaption></figure></div>
+      <div class="tags"><span>Python</span><span>FastAPI</span><span>LangGraph</span><span>pgvector</span><span>WhatsApp Cloud API</span><span>aiogram</span><span>React 19</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Yario</span><span>Jun – Sep 2026</span><span>full-stack</span></div>
+    <div>
+      <h3><span lang="ru">Маркетплейс RedFox Stay и White Label для партнёров</span><span lang="en">RedFox Stay marketplace and White Label for partners</span></h3>
+      <p lang="ru">Публичная витрина аренды (основной автор фронтенда) и витрины под брендом партнёров: схема и API в .NET-ядре с разделением цены 10/90, атрибуцией бронирований и согласиями, экраны в Angular-админке, лиды в amoCRM, Stripe billing webhook. Поиск картой и списком, фильтры, валюты, RU/EN с автопереводом объявлений.</p>
+      <p lang="en">The public rental storefront (main front-end author) and partner-branded storefronts: schema and API in the .NET core with a 10/90 price split, booking attribution and consent, Angular admin screens, leads delivered to amoCRM, a Stripe billing webhook. Map and list search, filters, currencies, RU/EN with auto-translated listings.</p>
+      <div class="duo" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)"><figure><video class="demo" src="media/rfs-demo.webm" poster="shots/rfs-search.jpg" autoplay muted loop playsinline preload="metadata" aria-label="RedFox Stay demo"></video><figcaption>redfoxstay.com · <span lang="ru">демо</span><span lang="en">demo</span></figcaption></figure><figure><img src="shots/rfs-mobile.jpg" alt="RedFox Stay on mobile" loading="lazy"><figcaption lang="ru">Мобильная версия</figcaption><figcaption lang="en">Mobile</figcaption></figure></div>
+      <figure><img src="shots/yl-whitelabel.jpg" alt="White Label storefront settings" loading="lazy"><figcaption lang="ru">White Label: партнёр настраивает свою витрину (адрес, логотип, цвета) и сразу видит превью. Название клиента скрыто.</figcaption><figcaption lang="en">White Label: a partner sets up their storefront (address, logo, colours) with a live preview. Client name hidden.</figcaption></figure>
+      <div class="tags"><span>Next.js 16</span><span>NestJS</span><span>.NET / EF Core</span><span>Angular 21</span><span>Leaflet</span><span>amoCRM</span><span>Stripe</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>Jun – Sep 2026</span><span lang="ru">основной автор</span><span lang="en">main author</span></div>
+    <div>
+      <h3><span lang="ru">AI-система найма (ATS)</span><span lang="en">AI hiring system (ATS)</span></h3>
+      <p lang="ru">Внутренняя ATS: кандидаты из плагина LinkedIn, hh и rabota.by, файлов резюме и почты сводятся в одну базу, дедуплицируются и получают AI-оценку под вакансию; прескрининг в Telegram-боте, исходящие письма, автоссылка на Meet, роли и права. На базе в тысячи кандидатов поиск дублей ускорен с 9.7 с до 0.3 с. Проверка на предвзятость по EU AI Act: один и тот же профиль прогоняется с разным полом, возрастом и гражданством, и AI-балл не должен меняться; нашёл, почему интеграция с rabota.by неделями молча не работала.</p>
+      <p lang="en">An internal ATS: candidates from a LinkedIn extension, hh and rabota.by, resume files and email merge into one base, get deduplicated and AI-scored against the vacancy; Telegram pre-screening, outbound email, automatic Meet links, roles and permissions. At thousands of candidates duplicate search went from 9.7 s to 0.3 s. An EU AI Act bias check re-scores the same profile with different gender, age and citizenship, and the score must not move; found why the rabota.by integration had silently failed for weeks.</p>
+      <figure><video src="media/hiring-chat.webm" poster="media/hiring-chat.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Pre-screening chat and candidate card. Demo data, scripted walkthrough."></video><figcaption lang="ru">Прескрининг в чате и карточка кандидата. Демо-данные, сценарий показа.</figcaption><figcaption lang="en">Pre-screening chat and candidate card. Demo data, scripted walkthrough.</figcaption></figure>
+      <figure><img src="shots/hr-inbox-dark.jpg" alt="AI ATS chat with AI analysis 87/100" loading="lazy"><figcaption lang="ru">Переписка с кандидатом и AI-анализ: 87/100, «профиль совпадает с вакансией». Демо-данные, список размыт.</figcaption><figcaption lang="en">Candidate thread with AI analysis: 87/100, “profile matches the role”. Demo data, list blurred.</figcaption></figure>
+      <div class="duo"><figure><img src="shots/hr-real-candidate.jpg" alt="Candidate with AI match score" loading="lazy"><figcaption lang="ru">Живой интерфейс: AI-балл 85 и разбор кандидата, сильные стороны и чего не хватает. Данные скрыты.</figcaption><figcaption lang="en">Live UI: AI score 85 with a breakdown of strengths and gaps. Personal data hidden.</figcaption></figure><figure><img src="shots/hr-bias-dark.jpg" alt="Bias check screen" loading="lazy"><figcaption lang="ru">Проверка на предвзятость (EU AI Act)</figcaption><figcaption lang="en">Bias check (EU AI Act)</figcaption></figure></div>
+      <div class="duo"><figure><img src="shots/hr-employees.jpg" alt="Employees" loading="lazy"><figcaption lang="ru">Сотрудники по отделам</figcaption><figcaption lang="en">Employees by department</figcaption></figure><figure><img src="shots/hr-employee.jpg" alt="Employee card" loading="lazy"><figcaption lang="ru">Карточка сотрудника</figcaption><figcaption lang="en">Employee card</figcaption></figure></div>
+      <div class="duo"><figure><img src="shots/hr-structure.jpg" alt="Org structure" loading="lazy"><figcaption lang="ru">Оргструктура компании</figcaption><figcaption lang="en">Org structure</figcaption></figure><figure><img src="shots/hr-vacancy.jpg" alt="Vacancy with AI tools" loading="lazy"><figcaption lang="ru">Вакансия: AI генерирует тестовое задание и оценивает зарплатный рынок</figcaption><figcaption lang="en">Vacancy: AI drafts the test task and estimates the salary market</figcaption></figure></div>
+      <div class="tags"><span>FastAPI</span><span>Alembic</span><span>LLM scoring</span><span>Chrome extension</span><span>Telegram</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>May – Aug 2026</span><span lang="ru">основной разработчик</span><span lang="en">main developer</span></div>
+    <div>
+      <h3>ASO Review Bot</h3>
+      <p lang="ru">Ответы на отзывы App Store и Google Play для нескольких приложений: GPT-4o пишет черновик, человек подтверждает в Slack или веб-интерфейсе, бот публикует. Правила «если-то», RAG по мультиязычным шаблонам, обучение на одобренных ответах, классификация тем, аудит-лог и роли. Деплой в GKE через Helm и ArgoCD, доступ к Google Play без ключей через Workload Identity.</p>
+      <p lang="en">Replies to App Store and Google Play reviews for several apps: GPT-4o drafts, a human approves in Slack or the web UI, the bot posts. If-then rules, RAG over multilingual templates, learning from approved replies, topic classification, audit log and roles. Deployed to GKE with Helm and ArgoCD, keyless Google Play access through Workload Identity.</p>
+      <figure><video src="media/aso-review-reply.webm" poster="media/aso-review-reply.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Review reply flow"></video><figcaption lang="ru">Ответ клиенту: выбрать отзыв, получить AI-черновик, поправить и одобрить. Демо-данные.</figcaption><figcaption lang="en">Replying to a customer: pick a review, get an AI draft, edit and approve. Demo data.</figcaption></figure>
+      <figure><img src="shots/aso-chat.jpg" alt="Review Bot with copilot chat" loading="lazy"><figcaption lang="ru">Копилот: «покажи негативные отзывы за сутки и подготовь ответы», находит отзывы, пишет черновики и спрашивает подтверждение. Демо-данные, сценарий показа.</figcaption><figcaption lang="en">Copilot: “show negative reviews from the last 24h and draft replies”, finds them, drafts and asks to confirm. Demo apps.</figcaption></figure>
+      <div class="tags"><span>FastAPI</span><span>Next.js 16</span><span>App Store Connect API</span><span>Google Play API</span><span>ArgoCD</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>Jan – Mar 2026</span><span lang="ru">AI-видео для рекламы</span><span lang="en">AI video for ads</span></div>
+    <div>
+      <h3><span lang="ru">AI-фабрика рекламных креативов</span><span lang="en">AI factory for ad creatives</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>Для рекламы приложений компании нужны десятки свежих видео-креативов. Руками их долго и дорого снимать и монтировать.</dd></div>
+        <div><dt>Внедрил</dt><dd>Конвейеры генерации на n8n + ComfyUI/Weavy, которые запускаются из Slack: маркетолог выбирает формат, загружает фото или референс, и через несколько минут получает готовый ролик 9:16. Внутри генерация картинок (Gemini / Nano Banana), видео и «поющих» аватаров (Kling, Wan 2.5), музыки (ACE-Step), апскейл и автоматический монтаж. Отдельные линии под разные форматы роликов (поющие аватары, эмоциональные истории, видео с питомцами и др.); до 5 роликов параллельно.</dd></div>
+        <div><dt>Надёжность</dt><dd>Нашёл тихий сбой, когда конвейер отчитывался «успех», а видео не создавалось (переполнение seed в ноде Kling), и закрыл его.</dd></div>
+        <div class="res"><dt>Результат</dt><dd>Креативы из конвейера уходили в платную рекламу приложений компании: маркетинг получил поток роликов без съёмок и монтажёра.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>Advertising for the company's apps needs dozens of fresh video creatives, and shooting and editing them by hand is slow and expensive.</dd></div>
+        <div><dt>Deployed</dt><dd>Generation pipelines on n8n + ComfyUI/Weavy launched from Slack: a marketer picks a format, uploads a photo or reference and gets a finished 9:16 video minutes later. Inside: image generation (Gemini / Nano Banana), video and singing avatars (Kling, Wan 2.5), music (ACE-Step), upscaling and automatic editing. Separate lines per video format (singing avatars, emotional stories, pet videos and more); up to 5 videos in parallel.</dd></div>
+        <div><dt>Reliability</dt><dd>Found and fixed a silent failure where the pipeline reported success but produced no video (seed overflow in the Kling node).</dd></div>
+        <div class="res"><dt>Result</dt><dd>Creatives from the pipeline went into the company's paid app advertising: marketing got a stream of videos with no shoots and no editor.</dd></div>
+      </dl>
+      <figure style="max-width:360px"><video src="media/creative-cowboy.mp4" poster="media/creative-cowboy.jpg" autoplay muted loop playsinline preload="metadata" aria-label="AI-generated ad creative"></video><figcaption lang="ru">Креатив, собранный конвейером целиком автоматически</figcaption><figcaption lang="en">A creative produced end-to-end by the pipeline</figcaption></figure>
+      <div class="tags"><span>n8n</span><span>ComfyUI</span><span>Weavy</span><span>Kling</span><span>Wan 2.5</span><span>Gemini</span><span>ACE-Step</span><span>FFmpeg</span><span>Slack</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>2026</span><span lang="ru">маркетинг-аналитика</span><span lang="en">marketing intelligence</span></div>
+    <div>
+      <h3><span lang="ru">Маркетинг-аналитика: тренды, конкуренты, креативы</span><span lang="en">Marketing intelligence: trends, competitors, creatives</span></h3>
+      <p lang="ru"><b>Радар трендов</b> ловит тренды до пика: TikTok, Instagram, YouTube, Reddit, X и Google Trends, скоринг роста за 6 часов по уровням от RISING до EARLY_ROCKET, скорость распространения звуков, агенты GPT-4o и Gemini, отчёты и запуск из Slack (160+ нод). <b>Анализ конкурентов</b> разбирает рекламу конкурентов из Facebook Ads Library через Gemini Vision и группирует её в концепты. <b>Дашборд креативов</b>: превратил ручную Google-таблицу UA-команды в дашборд с автостатусом победил/проиграл по BI-данным, ролями и SSO, с двусторонней синхронизацией с таблицей; в проде на GKE. Участвовал в карте креативных концептов.</p>
+      <p lang="en"><b>A trend radar</b> catches trends before they peak: TikTok, Instagram, YouTube, Reddit, X and Google Trends, 6-hour growth scoring in tiers from RISING to EARLY_ROCKET, sound spread velocity, GPT-4o and Gemini agents, reports and runs from Slack (~160 nodes). <b>Competitor analysis</b> reads competitor ads from the Facebook Ads Library with Gemini Vision and clusters them into concepts. <b>Creative dashboard</b>: turned the UA team's manual Google Sheet into a dashboard with automatic won/lost from BI data, roles and SSO, two-way synced with the sheet; in production on GKE. Contributed to a map of creative concepts.</p>
+      <figure><video src="media/cw-dashboard.webm" poster="media/cw-dashboard.jpg" autoplay muted loop playsinline preload="metadata" aria-label="дашборд креативов dashboard"></video><figcaption lang="ru">Дашборд креативов: командный центр UA-команды. Демо-данные.</figcaption><figcaption lang="en">Creative dashboard: the UA team's command centre. Demo data.</figcaption></figure>
+      <figure><img src="shots/cw-creatives.jpg" alt="Creatives table with won/lost status" loading="lazy"><figcaption lang="ru">Креативы со статусом «победа / проигрыш / ожидание» по данным BI</figcaption><figcaption lang="en">Creatives with won / lost / pending status from BI data</figcaption></figure>
+      <div class="tags"><span>n8n</span><span>Apify</span><span>Gemini Vision</span><span>Supabase</span><span>Slack Block Kit</span><span>Go</span><span>Vue</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Featlica</span><span>2026</span><span lang="ru">платежи и финансы</span><span lang="en">payments and finance</span></div>
+    <div>
+      <h3><span lang="ru">Защита от чарджбэков и сверка счетов</span><span lang="en">Chargeback defence and invoice reconciliation</span></h3>
+      <p lang="ru">Система собирает доказательства по chargeback, до сотни и более споров за день: Stripe (волны диспутов одного клиента, PDF переписки) и PayPal (4 сценария, подтверждение через Slack-модалку). Сверка счетов на Go: счета из Gmail, извлечение полей PDF моделью OpenAI по строгой схеме, нормализация поставщиков, сопоставление платежей банка Mercury со счетами.</p>
+      <p lang="en">The system builds chargeback evidence, 100+ disputes a day: Stripe (waves of disputes per customer, conversation PDF) and PayPal (4 scenarios, approval via a Slack modal). Invoice reconciliation in Go: invoices from Gmail, PDF field extraction with an OpenAI model into a strict schema, vendor normalisation, matching Mercury bank payments to invoices.</p>
+      <div class="tags"><span>Stripe</span><span>PayPal</span><span>Go</span><span>OpenAI</span><span>Gmail API</span><span>Postgres</span></div>
+    </div>
+  </article>
+
+  <article class="case">
+    <div class="meta"><span class="org">Yario</span><span>Mar – Sep 2026</span><span lang="ru">402 коммита в yario-shared · 94 из 99 в Clawdbot</span><span lang="en">402 commits in yario-shared · 94 of 99 in Clawdbot</span></div>
+    <div>
+      <h3><span lang="ru">AI-native разработка: ночной агент, проверка доказательствами, база знаний</span><span lang="en">AI-native delivery: night agent, proof-based checks, knowledge base</span></h3>
+      <dl class="pdr" lang="ru">
+        <div><dt>Проблема</dt><dd>Два разработчика и AI-агенты работают в одних репозиториях. Фиксы терялись, «зелёные» тесты иногда вообще не запускали браузер, а новому человеку или агенту было негде понять, как устроен проект.</dd></div>
+        <div><dt>Ночной агент</dt><dd>Задачу можно отдать на ночь меткой в GitHub или командой в Telegram с одноразовым кодом подтверждения. В 02:00 AI-агент берёт одну задачу, делает её по правилам (тесты нельзя ослаблять или удалять) и открывает PR. Потом отдельный агент-проверяющий с чистой копией кода, не видя рассуждений первого, перепроверяет результат и выносит вердикт. Если задачи нет или сервер не готов, агент не стартует и не тратит деньги. Утром человек смотрит готовый PR и мержит.</dd></div>
+        <div><dt>Тесты</dt><dd>У каждой задачи свой стенд с копией базы на отдельном адресе. UI-задача без видео прохождения Playwright считается непроверенной: коммит не пройдёт, пока нет зелёного прогона и записи. Коммит без привязки к задаче тоже не пройдёт. Отчёт исполнителя не считается доказательством, нужны артефакты.</dd></div>
+        <div><dt>Знания</dt><dd>yario-shared стал единым источником правды: архитектура, решения (ADR), runbooks, пакет для партнёров с API, портал разработчика. Плагин для Claude Code ведёт любого, человека или агента, по одному маршруту: найти задачу, поднять стенд, отлаживать кластер, обновить публичную документацию. Каждый шаг пишется комментарием в задачу.</dd></div>
+        <div><dt>Платформа</dt><dd>k3s на Hetzner, Terraform, Helm, Prometheus, Grafana, Loki (239 коммитов в инфраструктуру). Когда лимит GitHub Actions заблокировал все деплои, перевёл 23 CI-джоба на свой раннер, и релизы пошли снова без оплаты минут.</dd></div>
+        <div><dt>Clawdbot</dt><dd>AI-участник команды в Telegram: сам заводит задачи из сообщений и скриншотов, отвечает по истории проекта, шлёт дневные отчёты и каждое утро проверяет здоровье прода.</dd></div>
+        <div class="res"><dt>Польза</dt><dd>Агенты делают реальные задачи ночью: первая прошла весь путь от метки до смерженного PR 19 августа. Ложных «всё проверено» больше нет, пустые ночи ничего не стоят, два разработчика и агенты не затирают работу друг друга, а новичок начинает с одной точки входа.</dd></div>
+      </dl>
+      <dl class="pdr" lang="en">
+        <div><dt>Problem</dt><dd>Two developers and AI agents share the same repositories. Fixes went missing, some “green” tests never launched a browser, and a newcomer or an agent had nowhere to learn how the project works.</dd></div>
+        <div><dt>Night agent</dt><dd>A task is handed over for the night with a GitHub label or a Telegram command confirmed by a one-time code. At 02:00 an AI agent takes one task, does it under strict rules (tests may not be weakened or deleted) and opens a PR. A separate verifier agent with a clean checkout, blind to the first agent's reasoning, re-checks and gives a verdict. With no task or an unhealthy host the agent never starts and spends nothing. In the morning a human reviews and merges.</dd></div>
+        <div><dt>Tests</dt><dd>Every task gets its own stand with a database copy at its own address. A UI task without a Playwright video counts as unchecked: the commit is blocked until there is a green run and a recording, and a commit not tied to a task is blocked too. An executor's report is not proof; artifacts are.</dd></div>
+        <div><dt>Knowledge</dt><dd>yario-shared became the single source of truth: architecture, ADRs, runbooks, a partner API package, a developer portal. A Claude Code plugin walks anyone, human or agent, through one route: find the task, raise a stand, debug the cluster, update public docs, with every step logged on the issue.</dd></div>
+        <div><dt>Platform</dt><dd>k3s on Hetzner, Terraform, Helm, Prometheus, Grafana, Loki (239 infra commits). When the GitHub Actions quota blocked every deploy, moved 23 CI jobs to a self-hosted runner and releases resumed at no minute cost.</dd></div>
+        <div><dt>Clawdbot</dt><dd>An AI teammate in Telegram: files issues from messages and screenshots, answers from project history, sends daily reports and checks production health every morning.</dd></div>
+        <div class="res"><dt>Impact</dt><dd>Agents ship real tasks overnight; the first went from label to merged PR on 19 August. No more false “all checked”, empty nights cost nothing, two developers and agents stop overwriting each other, and newcomers start from one entry point.</dd></div>
+      </dl>
+      <div class="tags"><span>OpenClaw</span><span>Claude Code plugin</span><span>GitHub Actions</span><span>Playwright</span><span>Midscene</span><span>k3s stands</span><span>Terraform</span><span>Telegram</span></div>
+    </div>
+  </article>
+</section>
+
+<section class="noprint">
+  <div class="eyebrow"><span lang="ru">Лаборатория</span><span lang="en">Lab</span></div>
+  <h2><span lang="ru">Что пробую</span><span lang="en">What I experiment with</span></h2>
+  <div class="lab">
+    <div><h3><span lang="ru">Бенчмарк моделей</span><span lang="en">Model benchmark</span></h3><p lang="ru">Сравнение моделей по качеству и цене на ~600k токенов реальных резюме через OpenRouter и DeepInfra, чтобы выбрать бэкенд по данным.</p><p lang="en">Quality-versus-cost comparison of models on ~600k tokens of real resumes via OpenRouter and DeepInfra, to choose a backend on data.</p></div>
+    <div><h3><span lang="ru">Мультипровайдерный AI-чат</span><span lang="en">Multi-provider AI chat</span></h3><p lang="ru">Личный проект, ~270 коммитов: маршрутизация между OpenAI, Anthropic и Google, режимы рассуждения, очень длинные входы.</p><p lang="en">Personal project, ~270 commits: routing between OpenAI, Anthropic and Google, reasoning modes, very long inputs.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow"><span lang="ru">Инструменты</span><span lang="en">Toolkit</span></div>
+  <h2><span lang="ru">С чем работаю</span><span lang="en">What I work with</span></h2>
+  <div class="cols">
+    <div><h3>LLM</h3><p>LangGraph, LangChain, hybrid RAG (pgvector + full-text, RRF), tool calling, evals, LLM-as-judge, PII. OpenAI, Claude, DeepSeek, Gemini, Kimi.</p></div>
+    <div><h3><span lang="ru">Интеграции</span><span lang="en">Integrations</span></h3><p>WhatsApp Cloud API, Telegram, Max, Zendesk, Stripe, PayPal, amoCRM, Bitrix24, Beds24, Channex, Amplitude, App Store, Google Play, Slack.</p></div>
+    <div><h3><span lang="ru">Код</span><span lang="en">Code</span></h3><p>Python (FastAPI, SQLAlchemy), TypeScript (React, Next.js, Vue, NestJS, Angular), Go, SQL, C#/.NET.</p></div>
+    <div><h3><span lang="ru">Платформа</span><span lang="en">Platform</span></h3><p>Docker, Kubernetes (k3s, GKE), Helm, ArgoCD, Terraform, GitHub Actions, GitLab CI, Prometheus, Grafana, Loki.</p></div>
+    <div><h3><span lang="ru">Автоматизация</span><span lang="en">Automation</span></h3><p lang="ru">n8n на масштабе 150+ воркфлоу, Make.com, GoHighLevel, Apify, голосовые боты.</p><p lang="en">n8n at 150+ workflow scale, Make.com, GoHighLevel, Apify, voice bots.</p></div>
+    <div><h3><span lang="ru">Процесс</span><span lang="en">Process</span></h3><p lang="ru">Claude Code и Codex как основная среда, задача до кода, стенд на задачу, доказательства до релиза.</p><p lang="en">Claude Code and Codex as the main environment, issue before code, a stand per task, evidence before release.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow"><span lang="ru">Опыт</span><span lang="en">Experience</span></div>
+  <h2><span lang="ru">Где</span><span lang="en">Where</span></h2>
+  <div class="xp">
+    <div><span class="when">Oct 2025 – <span lang="ru">н.в.</span><span lang="en">now</span></span><span><b>Featlica</b> (US) · Forward Deployed AI / Automation Engineer<p lang="ru">Поддержка, evals, платежи, найм, отзывы, маркетинг-аналитика, финансы.</p><p lang="en">Support, evals, payments, hiring, reviews, marketing intelligence, finance.</p></span></div>
+    <div><span class="when">Feb 2026 – <span lang="ru">н.в.</span><span lang="en">now</span></span><span><b>Yario</b> · AI / Full-stack Engineer<p lang="ru">AI-консьерж, маркетплейс, White Label, платформа.</p><p lang="en">Guest AI concierge, marketplace, White Label, platform.</p></span></div>
+    <div><span class="when">Oct 2024 – May 2025</span><span><b>Toxic Media</b> (<span lang="ru">Москва, маркетинг и продакшн</span><span lang="en">Moscow, marketing and production</span>) · Automation Engineer<p lang="ru">Интеграции Instagram и WhatsApp через Meta Developer, своя логика на JavaScript внутри пайплайнов, OpenAI и Claude для генерации логики, голосовые в текст, воронки в CRM (U-Clients), деплой n8n через Docker и GitHub.</p><p lang="en">Instagram and WhatsApp via Meta Developer, custom JavaScript inside pipelines, OpenAI and Claude generating logic, voice to text, CRM funnels (U-Clients), n8n deployed with Docker and GitHub.</p></span></div>
+    <div><span class="when">May 2023 – May 2025</span><span><b>Jam PRO</b> (<span lang="ru">Минск</span><span lang="en">Minsk</span>) · Prompt Engineer, automation<p lang="ru">Чат-боты и RAG на n8n и LangChain, векторные БД, X/Twitter-агент с автопостингом, amoCRM с A/B-тестами и QA-анализом диалогов, Airtable, Make.com, Telegram, Instagram, WhatsApp API.</p><p lang="en">Chatbots and RAG on n8n and LangChain, vector DBs, an X/Twitter agent with autoposting, amoCRM with A/B tests and dialogue QA, Airtable, Make.com, Telegram, Instagram, WhatsApp APIs.</p></span></div>
+    <div><span class="when">May 2023 – Dec 2024</span><span><b>sdmclimate</b>, <b>AlteraInvest</b> · <span lang="ru">AI-автоматизация контента и SEO</span><span lang="en">AI content automation and SEO</span><p lang="ru">Полностью автоматизировал работу копирайтеров и публикации на сайте: 50+ статей в день на 3 языках через WordPress API. Автоматический рерайтер карточек товаров для поддоменов, семантика, метаданные, аналитика.</p><p lang="en">Fully automated the copywriting team and site publishing: 50+ articles a day in 3 languages via the WordPress API. Automatic product-card rewriter for subdomains, keyword research, metadata, analytics.</p></span></div>
+    <div><span class="when">Aug 2023 – Nov 2024</span><span><b>MagnetMint</b> (US) · Chatbot integrator<p lang="ru">Голосовые боты для сервиса ремонта техники: пропущенные звонки, обзвон, сбор данных, транскрипты, отсев спама и телемаркетинга, итог минус 70% нагрузки на телефоны. GoHighLevel, Thinkific, Help Scout, распознавание адресов через AI для CRM, Python-парсеры, REST и GraphQL, рассылки через Make.</p><p lang="en">Voice bots for an appliance-repair business: missed calls, callbacks, data capture, transcripts, spam and telemarketer filtering, cutting phone load by 70%. GoHighLevel, Thinkific, Help Scout, AI address recognition into CRM, Python parsers, REST and GraphQL, Make email flows.</p></span></div>
+    <div><span class="when">Feb 2023 – Feb 2024</span><span><b>ForestVPN</b> · Prompt Engineer<p lang="ru">Рерайт статей через ChatGPT и Midjourney для блога на WordPress и Bitrix, AI-аватары, публикация через RSS, перенос автоматизаций из Make в Python-скрипты.</p><p lang="en">Article rewriting with ChatGPT and Midjourney for WordPress and Bitrix blogs, AI avatars, RSS publishing, moving automations from Make to Python.</p></span></div>
+    <div><span class="when">2022</span><span><b>CHATME.ai</b> (<span lang="ru">Новосибирск</span><span lang="en">Novosibirsk</span>)<p lang="ru">Рерайтер и автопостинг блога под ключ, чат-боты для бизнес-процессов, сайт и его оптимизация.</p><p lang="en">Turnkey rewriter and blog autoposting, business-process chatbots, website and optimisation.</p></span></div>
+    <div><span class="when">2015</span><span><b lang="ru">Международный университет Ала-Тоо</b><b lang="en">Ala-Too International University</b><p lang="ru">Магистр, международные отношения, бизнес и управление.</p><p lang="en">Master's, international relations, business and management.</p></span></div>
+  </div>
+</section>
+
+<footer><span lang="ru">Обновлено в ноябре 2026. Проекты под NDA: названия продуктов и клиентов скрыты, цифры округлены, на скринах и видео только тестовые данные. Подробный разбор архитектуры, на созвоне.</span><span lang="en">Updated November 2026. NDA projects: product and client names are hidden, figures are rounded, screenshots and videos show test data only. Detailed architecture walk-through on a call.</span></footer>
+</div>
+<script>
+(function(){
+  var root=document.documentElement;
+  function set(l){root.setAttribute('data-lang',l);root.lang=l;
+    document.querySelectorAll('.lang button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.l===l))});
+    try{localStorage.setItem('lang',l)}catch(e){}}
+  var init=location.hash==='#en'?'en':location.hash==='#ru'?'ru':null;
+  if(!init){try{init=localStorage.getItem('lang')}catch(e){}}
+  set(init||'ru');
+  document.querySelectorAll('.lang button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.l)})});
+  document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){
+    navigator.clipboard.writeText(b.dataset.copy).then(function(){b.textContent='✓';setTimeout(function(){b.textContent='copy'},1500)})
+    .catch(function(){var r=document.createRange();r.selectNodeContents(b.parentNode);var s=getSelection();s.removeAllRanges();s.addRange(r)});
+  })});
+})();
+</script>
+
+</body>
+</html>
