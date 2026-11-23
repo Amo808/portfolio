@@ -292,9 +292,9 @@
       </article>
       <article class="card mini"><span class="who">Hostiva</span>
         <h3><span lang="ru">Инфраструктура и CI/CD</span><span lang="en">Infrastructure and CI/CD</span></h3>
-        <p lang="ru">Третий по числу коммитов в инфраструктуре: k3s, Terraform, Helm, свои CI-раннеры, Prometheus, Grafana и Loki. Тестовый стенд на каждую задачу, бэкапы Postgres с восстановлением на момент времени и учебным восстановлением. Когда лимит GitHub Actions остановил деплои, перевёл 23 CI-задачи на свой раннер.</p>
-        <p lang="en">Third by commits in the infrastructure repo: k3s, Terraform, Helm, self-hosted CI runners, Prometheus, Grafana and Loki. A test stand per task, Postgres backups with point-in-time recovery and drill restores. When the GitHub Actions limit stopped deploys, I moved 23 CI jobs to our own runner.</p>
-        <div class="tags" style="margin-top:14px"><span>k3s</span><span>Terraform</span><span>Helm</span><span>Prometheus</span><span>Grafana</span><span>Loki</span></div>
+        <p lang="ru">Брал готовые open source решения и встраивал в наш k3s и CI. Бэкапы Postgres на WAL-G с восстановлением на любой момент и регулярными учебными восстановлениями. Внешние проверки сайтов и TLS, алерты RabbitMQ, сами правила алертов покрыты тестами. Свои CI-раннеры: когда лимит GitHub Actions остановил деплои, перевёл на них 23 задачи. В PR гейт с видео Playwright-прогона, PII-шлюз на Presidio перед моделями.</p>
+        <p lang="en">I took proven open source tools and fitted them into our k3s and CI. Postgres backups on WAL-G with point-in-time recovery and regular drill restores. External site and TLS probes, RabbitMQ alerts, and tests for the alert rules themselves. Self-hosted CI runners: when the GitHub Actions limit stopped deploys, I moved 23 jobs onto them. A PR gate with a Playwright run video, a PII gateway on Presidio in front of the models.</p>
+        <div class="tags" style="margin-top:14px"><span>k3s</span><span>Terraform</span><span>WAL-G</span><span>Blackbox exporter</span><span>Playwright</span><span>Presidio</span></div>
       </article>
       <article class="card mini"><span class="who">Featlica</span>
         <h3><span lang="ru">Аудит денег, которые трогает бот</span><span lang="en">An audit of the money the bot touches</span></h3>
