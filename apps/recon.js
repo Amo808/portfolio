@@ -1,412 +1,482 @@
-/* Mini app: invoice reconciliation for a finance team. A model reads PDF invoices from email into a strict schema,
-   then plain code matches bank payments to them. Same structure as apps/support.js: state object S, a base render,
-   small incremental updates while it runs. The role switch lives outside S, so it never resets the run. */
+/* Mini app: month closing for a finance team. Bank statements come in, plain rules and the matcher close what they can,
+   the dashboard explains every open payment and offers one button for it. Employees fill their monthly invoice
+   (salary from the base pay, receipts, NBP rate, payout by bank or USDT), finance confirms the payout against it.
+   Reading a vendor PDF is one small automatic step. Same structure as apps/hiring.js: state S, render(), next() only reads. */
 (function () {
   'use strict';
+
   var CSS = [
-    '@media (min-width:901px){.demo-grid.recon-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}}',
-    '.recon-note{display:flex;gap:9px;align-items:flex-start;margin-bottom:14px;padding:10px 14px;border:1px dashed var(--line);border-radius:12px;background:var(--bg2);font-size:13.5px;line-height:1.45;color:var(--ink2)}',
-    '.recon-note svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--info)}',
-    '.recon-note b{color:var(--ink);font-weight:600}',
-    '.recon-tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line2);background:var(--card)}',
-    '.recon-tools p{flex:1 1 180px;min-width:0;font-size:12.5px;line-height:1.4;color:var(--ink3)}',
+    '.recon-tabs{margin:12px 12px 0}',
+    '.recon-col,.recon-col>.win,.recon-main{min-width:0;max-width:100%}',
+    '.recon-main .okl{align-items:flex-start;line-height:1.4}.recon-main .okl span{min-width:0}',
     '.recon-list{display:grid;gap:8px;padding:12px;align-content:start}',
-    '.recon-row{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:10px 12px;border:1px solid var(--line2);border-radius:13px;background:var(--card);transition:border-color .25s var(--ease-out),box-shadow .25s var(--ease-out)}',
-    '.recon-row.peer{border-color:var(--info)}',
-    '.recon-row.risk{border-color:var(--bad)}',
+    '.recon-row{display:grid;gap:6px;min-width:0;padding:10px 12px;border:1px solid var(--line2);border-radius:13px;background:var(--card);transition:border-color .25s ease,box-shadow .25s ease}',
+    '.recon-row.open{border-color:var(--wait)}',
     '.recon-row.hot{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}',
-    '.recon-b{flex:1;min-width:0}',
-    /* the slot on the left: a type icon first, the pair letter once the row is matched */
-    '.recon-pair{flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:9px;background:var(--bg);color:var(--ink3);font:700 14px/1 var(--fm)}',
-    '.recon-pair svg{width:15px;height:15px}',
-    '.recon-pair.on{border-color:var(--info);background:var(--info);color:var(--bg)}',
-    '.recon-pair.risk{border-color:var(--bad);background:var(--bad);color:var(--bg)}',
-    '.recon-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"name meta sum";gap:3px 12px;align-items:baseline}',
-    '.recon-head.two{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name sum" "meta meta"}',
-    '.recon-name{grid-area:name;min-width:0;font:600 14.5px/1.35 var(--fb);overflow-wrap:anywhere}',
-    '.recon-name.raw{font:500 13px/1.5 var(--fm)}',
-    '.recon-sum{grid-area:sum;font:700 15px/1.3 var(--fm);white-space:nowrap;text-align:right}',
-    '.recon-meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0;font-size:12.5px;line-height:1.4;color:var(--ink3)}',
-    '.recon-amt{display:inline-block;transition:filter .25s ease}',
-    '.recon-x{display:flex;flex-wrap:wrap;gap:3px 10px;align-items:center;margin-top:7px;font:400 12px/1.5 var(--fm);color:var(--ink3)}',
-    '.recon-x b{font-weight:500;color:var(--ink)}',
-    '.recon-x .tg{font-size:10.5px;padding:4px 6px}',
-    '.recon-g{display:flex;gap:6px;align-items:flex-start;margin-top:7px;font-size:12.5px;line-height:1.4;font-weight:500;color:var(--wait)}',
-    '.recon-g svg{width:14px;height:14px;flex:none;margin-top:2px}',
-    '.recon-g.ok{color:var(--ok)}',
-    '.recon-g.bad{color:var(--bad)}',
-    '.recon-g.hum{color:var(--ink2)}',
-    '.recon-foot{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:center;margin-top:8px}',
-    '.recon-foot small{font-size:12.5px;line-height:1.4;color:var(--ink3)}',
-    '.recon-foot small:empty{display:none}',
-    '.recon-tg{white-space:normal;line-height:1.3;text-align:left}',
-    '.recon-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}',
-    '.recon-btns .btn{min-height:40px}',
-    '@media (max-width:640px){.recon-list{padding:10px}.recon-head,.recon-head.two{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name name" "meta sum";align-items:center}}',
-    '@media (prefers-reduced-motion:reduce){.recon-row,.recon-amt{transition:none}}'
-  ].join('\n');
+    '.recon-r1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}',
+    '.recon-r1 b{font:500 13px/1.4 var(--fm);min-width:0;overflow-wrap:anywhere}',
+    '.recon-sum{font:700 14px/1.3 var(--fm);white-space:nowrap}',
+    '.recon-r2{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12.5px;line-height:1.4;color:var(--ink3)}',
+    '.recon-r2 .tg{font-size:10.5px;padding:4px 6px}',
+    '.recon-why{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--ink2)}',
+    '.recon-why svg{width:14px;height:14px;flex:none;margin-top:2px;color:var(--wait)}',
+    '.recon-why.ok svg{color:var(--ok)}',
+    '.recon-acts{display:flex;flex-wrap:wrap;gap:6px}',
+    '.recon-acts .btn{min-height:38px}',
+    '.recon-auto{display:flex;gap:6px;align-items:center;font:500 11.5px/1.4 var(--fm);color:var(--info)}',
+    '.recon-auto svg{width:13px;height:13px;flex:none}',
+    '.recon-empty{padding:18px 12px;font-size:13.5px;color:var(--ink3);line-height:1.45}',
+    '.recon-filt{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0}',
+    '.recon-filt span{font-size:12px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink2)}',
+    '.recon-filt span.on{border-color:var(--acc);color:var(--acc-ink)}',
+    '.recon-tw{padding:12px}',
+    '.recon-tw .btn{min-height:38px}',
+    '.recon-me{display:grid;gap:10px}',
+    '.recon-line{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--line2);font-size:13.5px;line-height:1.4}',
+    '.recon-line small{display:block;font-size:12px;color:var(--ink3)}',
+    '.recon-line b{font:600 14px/1.3 var(--fm);white-space:nowrap}',
+    '.recon-tot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:4px}',
+    '.recon-tot b{font:700 26px/1 var(--fm);letter-spacing:-.02em}',
+    '.recon-pdf{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);font-size:13px;line-height:1.4}',
+    '.recon-pdf svg{width:18px;height:18px;flex:none;color:var(--acc-ink)}',
+    '.recon-pdf.locked svg{color:var(--ink3)}',
+    '.recon-who{font:500 11px/1.3 var(--fm);letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}',
+    '@media (max-width:640px){.recon-tot b{font-size:22px}.recon-tw .sheet th,.recon-tw .sheet td{padding:6px 7px}}',
+    '@media (prefers-reduced-motion:reduce){.recon-row{transition:none}}'
+  ].join('');
 
   PF.app('recon', {
     cap: [
-      'Макет на выдуманных данных. Настоящий сервис так же читает счета из почты и сопоставляет их с платежами из нескольких банков.',
-      'A mock on invented data. The real service reads invoices from email the same way and matches them with payments from several banks.'
+      'Макет на выдуманных данных: вендоры, люди и суммы придуманы. В настоящем сервисе те же причины у открытых платежей, тот же «Мой инвойс» сотрудника и то же подтверждение выплаты финансами.',
+      'A mock on invented data: vendors, people and amounts are made up. The real service has the same reasons on open payments, the same employee invoice page and the same payout confirmation by finance.'
     ],
-    pace: 900,
+    pace: 1100,
     mount: function (ctx) {
       var T = ctx.T, h = ctx.h, icon = ctx.icon;
       if (!document.getElementById('pf-recon-css')) document.head.appendChild(h('style', { id: 'pf-recon-css', text: CSS }));
 
-      /* ---------- data: five invoices and five bank payments, all invented ---------- */
-      var MON = {
-        aug: { name: T('август', 'August'), short: T('авг', 'Aug'), of: T('за август', 'for August') },
-        sep: { name: T('сентябрь', 'September'), short: T('сен', 'Sep'), of: T('за сентябрь', 'for September') }
-      };
-      /* raw: the vendor as written in the PDF, norm: after normalisation. Two Apple invoices share one amount: the trap. */
-      var INV = [
-        { id: 'figma', raw: 'Figma Inc', norm: 'Figma', no: 'FG-7731', per: 'sep', amt: '$75.00', num: '75.00', pay: 'pfig', pair: 'A' },
-        { id: 'cloud', raw: 'Cloud hosting LLC', norm: 'Cloud hosting', no: 'CH-2291', per: 'sep', amt: '$412.60', num: '412.60', pay: 'pcld', pair: 'B' },
-        { id: 'apl8', raw: 'Apple Distribution Intl.', norm: 'Apple', no: 'MX48210', per: 'aug', amt: '$99.00', num: '99.00', pay: 'pap8', pair: 'C' },
-        { id: 'apl9', raw: 'APPLE DISTRIBUTION INTERNATIONAL LTD', norm: 'Apple', no: 'MX51907', per: 'sep', amt: '$99.00', num: '99.00', pay: 'pap9', pair: 'D' },
-        { id: 'design', raw: 'Design contractor', norm: 'Design contractor', no: 'DC-0917', per: 'sep', amt: '$1,800.00', num: '1800.00', pay: 'ppay' }
-      ];
-      var PAY = [
-        { id: 'pap8', bank: 'Mercury', raw: 'APPLE.COM/BILL', date: T('04.08', '4 Aug'), amt: '$99.00' },
-        { id: 'pap9', bank: 'Mercury', raw: 'APPLE.COM/BILL', date: T('04.09', '4 Sep'), amt: '$99.00' },
-        { id: 'pfig', bank: 'Wise', raw: 'FIGMA MONTHLY RENEWAL', date: T('09.09', '9 Sep'), amt: '$75.00' },
-        { id: 'pcld', bank: 'Wise', raw: 'CLOUD HOSTING LLC WIRE', date: T('11.09', '11 Sep'), amt: '$412.60' },
-        { id: 'ppay', bank: 'Payoneer', raw: 'PAYROLL SEP', date: T('30.09', '30 Sep'), amt: '$1,800.00' }
-      ];
+      /* ---------- data: all invented ---------- */
+      function rows() {
+        return [
+          { id: 'adobe', src: 'Mercury', raw: 'ADOBE *CREATIVE CLOUD', sum: 59.99, st: 'auto', vendor: 'Adobe',
+            why: T('Инвойс ADB-1093 на ту же сумму, дата +1 день', 'Invoice ADB-1093, same amount, date +1 day') },
+          { id: 'nord', src: 'Wise', raw: 'Transfer to Studio Nord', sum: 1201.13, st: 'auto', vendor: 'Studio Nord',
+            why: T('Инвойс SN-0412 на 1 200.00 + комиссия Wise 1.13', 'Invoice SN-0412 for 1,200.00 + Wise fee 1.13') },
+          { id: 'oai', src: 'Mercury', raw: 'OPENAI *CHATGPT', sum: 120.40, st: 'auto', vendor: 'OpenAI',
+            why: T('Инвойс в PLN: 438 PLN по курсу ЕЦБ на день списания', 'Invoice in PLN: 438 PLN at the ECB rate on the charge day') },
+          { id: 'pay', src: 'Mercury', raw: 'GUSTO PAYROLL OCT', sum: 18400, st: 'rule', vendor: '—',
+            why: T('Зарплата: инвойс не нужен, закрыто правилом', 'Payroll: no invoice needed, closed by a rule') },
+          { id: 'tax', src: 'Mercury', raw: 'IRS USATAXPYMT', sum: 2310, st: 'rule', vendor: '—',
+            why: T('Налог: инвойс не нужен, закрыто правилом', 'Tax: no invoice needed, closed by a rule') },
+          { id: 'fig1', src: 'Payoneer', raw: 'PAYPAL *FIGMA', sum: 45, st: 'open', k: 'weak' },
+          { id: 'fig2', src: 'Payoneer', raw: 'PAYPAL *FIGMA', sum: 15, st: 'open', k: 'weak' },
+          { id: 'luma', src: 'Mercury', raw: 'LUMA AI INC', sum: 300, st: 'open', k: 'noinv', vendor: 'LumaAI' },
+          { id: 'not1', src: 'Mercury', raw: 'NOTION LABS', sum: 96, st: 'auto', vendor: 'Notion',
+            why: T('Инвойс NT-7781 на ту же сумму', 'Invoice NT-7781, same amount') },
+          { id: 'not2', src: 'Mercury', raw: 'NOTION LABS', sum: 96, st: 'open', k: 'dup', vendor: 'Notion' }
+        ];
+      }
+      var ME = { name: T('Анна П.', 'Anna P.'), file: 'Petrova_A inv October\'26.pdf' };
+      function staff() {
+        return [
+          { id: 'me', name: ME.name, total: null, via: null, st: 'draft' },
+          { id: 'igor', name: T('Игорь С.', 'Igor S.'), total: 2950, via: 'USDT', st: 'paid' },
+          { id: 'maria', name: T('Мария Л.', 'Maria L.'), total: 3400, via: T('счёт', 'bank'), st: 'sent' },
+          { id: 'oleg', name: T('Олег В.', 'Oleg V.'), total: null, via: null, st: 'draft' }
+        ];
+      }
+      var SAL = 3177, SPORT = 45.22, TOTAL = 3222.22;
 
-      var S, role = 'fin', seen = {}, inv = {}, pay = {};
-      var clock = 0, holdN = 0, holding = false;
-      var linkBtn = null, leaveBtn = null, btnRow = null, refusal = null;
-      function fresh() { return { phase: 'new', busy: false, tried: false, calls: 0, closed: 0 }; }
+      var S, clock = 0, N = {};
+      function fresh() {
+        return { role: 'fin', tab: 'todo', loaded: false, busy: false, hold: false, hk: 0, P: [], E: staff(), flash: null,
+          figma: false, drive: false, dupSeen: false, dup: false, rcpt: false, method: 'bank', blocked: false, sent: false,
+          kraken: false, payout: false, blurSeen: false, ended: false, mine: 0 };
+      }
 
-      /* ---------- static frame ---------- */
-      var segRole = ctx.seg(T('Роль', 'Role'), [
-        ['fin', T('Финансы', 'Finance')],
-        ['nofin', T('Без роли финансов', 'No finance role')]
-      ], 'fin', setRole);
+      /* ---------- frame ---------- */
+      var segRole = ctx.seg(T('Роль', 'Role'), [['fin', T('Финансы', 'Finance')], ['none', T('Без роли «финансы»', 'No finance role')]], 'fin', function (v) { setRole(v); });
       ctx.bar.appendChild(segRole);
 
-      var note = h('p.recon-note', { hidden: true }, icon('lock'), h('span', {
-        html: T('<b>Роли «Финансы» нет.</b> Суммы на экране размыты, а строки компании закрыты и в самой базе: row-level security.',
-          "<b>No finance role.</b> Amounts on screen are blurred, and the company's rows are also closed in the database itself: row-level security.")
-      }));
-      var readBtn = h('button.btn.btn-acc', { type: 'button', onclick: read }, icon('bolt'), T('Прочитать счета', 'Read the invoices'));
-      var matchBtn = h('button.btn', { type: 'button', onclick: match }, icon('link'), T('Сопоставить', 'Match'));
-      var toolsInv = h('div.recon-tools', null, readBtn, h('p', null, T('Модель читает каждый PDF в строгую схему: поставщик, номер, период, сумма, валюта.', 'A model reads each PDF into a strict schema: vendor, number, period, amount, currency.')));
-      var toolsPay = h('div.recon-tools', null, matchBtn, h('p', null, T('Обычный код без модели: сверяет поставщика, сумму и период.', 'Plain code, no model: it compares vendor, amount and period.')));
-      var invList = h('div.recon-list'), payList = h('div.recon-list');
-      var log = ctx.logger(T('Пока пусто. Каждый шаг сверки попадёт сюда со временем.', 'Empty for now. Every reconciliation step lands here with a timestamp.'), T('система', 'system'));
+      var segTab = ctx.seg('', [['todo', T('Дела за месяц', 'To do this month')], ['done', T('Сверено', 'Matched')], ['attn', T('Обратите внимание', 'Heads up')], ['staff', T('Выплаты сотрудникам', 'Staff payouts')]], 'todo', function (v) { setTab(v); });
+      segTab.classList.add('recon-tabs');
+      var mainP = h('div.recon-main');
+      var winMain = ctx.win('bank', T('Сверка · октябрь 2026', 'Reconciliation · October 2026'), '', segTab, mainP);
+
+      var meP = h('div.win-b');
+      var winMe = ctx.win('user', T('Мой инвойс · октябрь', 'My invoice · October'), T('видит только свой', 'sees only their own'), meP);
+
+      var log = ctx.logger(T('Пока пусто. Загрузите выписки за октябрь.', 'Empty for now. Load the October statements.'), T('сервис', 'service'));
       var cnt = ctx.counters([
-        ['closed', T('закрыто правилами', 'closed by rules')],
-        ['calls', T('вызовов модели, на сопоставление 0', 'model calls, 0 for matching')],
-        ['human', T('ушло человеку', 'sent to a human')],
-        ['period', T('ошибок периода поймано', 'period mistakes caught')]
+        ['open', T('платежей открыто', 'payments open'), '—'],
+        ['auto', T('закрыто само', 'closed by itself'), '—'],
+        ['you', T('решено одной кнопкой', 'solved with one button'), '0'],
+        ['paid', T('выплат сотрудникам сверено', 'staff payouts matched'), '1']
       ]);
-      var winInv = ctx.win('doc', T('Счета из почты', 'Invoices from email'), '', toolsInv, invList);
-      var winPay = ctx.win('bank', T('Платежи из банков', 'Bank payments'), 'Mercury · Wise · Payoneer', toolsPay, payList);
-      var winLog = ctx.win('log', T('Журнал сверки', 'Reconciliation log'), T('время условное', 'time is illustrative'), log.el, cnt.el);
-      winInv.classList.add('o1'); winPay.classList.add('o2');
-      ctx.body.appendChild(note);
-      ctx.body.appendChild(h('div.demo-grid.recon-grid.flow', null, h('div.demo-col', null, winInv), h('div.demo-col', null, winPay)));
-      winLog.classList.add('demo-wide');
+      var winLog = ctx.win('log', T('Журнал', 'Log'), T('время условное', 'time is illustrative'), log.el, cnt.el);
+
+      winMain.classList.add('o1'); winMe.classList.add('o2'); winLog.classList.add('o3', 'demo-wide');
+      ctx.body.appendChild(h('div.demo-grid.flow', null, h('div.demo-col.recon-col', null, winMain), h('div.demo-col.recon-col', null, winMe)));
       ctx.body.appendChild(winLog);
 
-      /* ---------- small helpers ---------- */
-      function tm(add) { clock += add; var m = 14 + Math.floor(clock / 60), s = clock % 60; return '09:' + m + ':' + (s < 10 ? '0' : '') + s; }
-      /* every amount goes through amt(): without the finance role it is blurred */
-      function amt(text) { return h('span.recon-amt' + (role === 'nofin' ? '.blur' : ''), null, text); }
-      function chip(n, cls, text) { n.className = 'tg ' + cls + ' recon-tg'; n.textContent = text; }
-      /* pair badge: the same letter on an invoice and on its payment; without a letter the slot shows the type icon again */
-      function badge(r, cls, text, title) {
-        var n = r.pair;
-        n.className = 'recon-pair' + (cls ? ' ' + cls + ' in-pop' : '');
-        n.textContent = text || '';
-        if (!text) n.appendChild(icon(r.ic));
-        n.title = title || '';
+      /* ---------- helpers ---------- */
+      function tm(add) {
+        clock += add;
+        var t = 9 * 60 + 30 + clock, hh = Math.floor(t / 60), mm = t % 60;
+        return hh + ':' + (mm < 10 ? '0' : '') + mm;
       }
-      function line(n, cls, ic, text) {
-        n.className = 'recon-g in-pop' + (cls ? ' ' + cls : '');
-        n.textContent = '';
-        n.appendChild(icon(ic)); n.appendChild(h('span', null, text));
-        n.hidden = false;
+      function hold(ms) { var k = ++S.hk; S.hold = true; ctx.later(function () { if (k === S.hk) S.hold = false; }, ms); }
+      function money(n) {
+        var s = n.toFixed(2).split('.'), w = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ctx.lang === 'ru' ? ' ' : ',');
+        return w + (ctx.lang === 'ru' ? ',' : '.') + s[1];
       }
-      function chain(steps) {
-        var i = 0;
-        (function go() {
-          if (i >= steps.length) return;
-          var s = steps[i++];
-          ctx.later(function () { s[1](); go(); }, s[0]);
+      function amt(n, cur) { return h('span' + (S.role === 'none' ? '.blur' : ''), null, money(n) + ' ' + (cur || 'USD')); }
+      function P(id) { for (var i = 0; i < S.P.length; i++) if (S.P[i].id === id) return S.P[i]; return null; }
+      function E(id) { for (var i = 0; i < S.E.length; i++) if (S.E[i].id === id) return S.E[i]; return null; }
+      function openN() { return S.P.filter(function (p) { return p.st === 'open'; }).length; }
+      function autoN() { return S.P.filter(function (p) { return p.st === 'auto' || p.st === 'rule'; }).length; }
+      function counts() {
+        if (!S.loaded) return;
+        cnt.set('open', String(openN())); cnt.set('auto', String(autoN())); cnt.set('you', String(S.mine));
+        cnt.set('paid', String(S.E.filter(function (e) { return e.st === 'paid'; }).length));
+      }
+      function close(p, vendor, why) { p.st = 'you'; if (vendor) p.vendor = vendor; p.why = why; S.mine++; S.flash = p.id; }
+
+      /* ---------- main window ---------- */
+      function row(p) {
+        var el = h('div.recon-row' + (p.st === 'open' ? '.open' : '') + (S.flash === p.id ? '.hot.in-pop' : ''));
+        var tag = p.st === 'rule' ? h('span.tg.tg-hum', null, T('правило', 'rule'))
+          : p.st === 'auto' ? h('span.tg.tg-ok', null, T('сверено само', 'auto-matched'))
+          : p.st === 'you' ? h('span.tg.tg-acc', null, T('решено', 'solved'))
+          : h('span.tg.tg-wait', null, T('открыт', 'open'));
+        el.appendChild(h('div.recon-r1', null, h('b', null, p.raw), h('span.recon-sum', null, amt(p.sum))));
+        el.appendChild(h('div.recon-r2', null, h('span', null, p.src), p.vendor && p.vendor !== '—' ? h('span', null, '· ' + p.vendor) : null, tag));
+        if (p.st !== 'open') { el.appendChild(h('div.recon-why.ok', null, icon('check'), h('span', null, p.why))); return el; }
+        var fin = S.role === 'fin', acts = h('div.recon-acts');
+        if (p.k === 'weak') {
+          el.appendChild(h('div.recon-why', null, icon('search'), h('span', null, fin ? T('Похоже на «Figma» из справочника. Это он?', 'Looks like "Figma" from the vendor list. Is it?') : T('Похоже на вендора из справочника', 'Looks like a vendor from the list'))));
+          if (fin) { var b = h('button.btn.btn-acc.btn-sm', { type: 'button', onclick: acceptFigma }, icon('check'), T('Да, это Figma', 'Yes, it is Figma')); acts.appendChild(b); N['fig_' + p.id] = b; }
+        } else if (p.k === 'noinv') {
+          el.appendChild(h('div.recon-why', null, icon('doc'), h('span', null, T('Инвойса за этот период нет в папке вендора', 'No invoice for this period in the vendor folder'))));
+          if (fin) {
+            N.drive = h('button.btn.btn-acc.btn-sm', { type: 'button', onclick: fromDrive }, icon('reset'), T('Обновить из Drive', 'Refresh from Drive'));
+            acts.appendChild(N.drive);
+            acts.appendChild(h('button.btn.btn-sm', { type: 'button', onclick: function () { noInvoice(p); } }, T('Инвойс не нужен', 'No invoice needed')));
+          }
+        } else if (p.k === 'dup') {
+          el.appendChild(h('div.recon-why', null, icon('warn'), h('span', null, T('Второй платёж Notion на ту же сумму в тот же день. Смотрите «Обратите внимание».', 'A second Notion charge, same amount, same day. See "Heads up".'))));
+        } else if (p.k === 'kraken') {
+          el.appendChild(h('div.recon-why', null, icon('users'), h('span', null, T('Похоже на выплату сотруднику. Подбор во вкладке «Выплаты сотрудникам».', 'Looks like a staff payout. The match is on the "Staff payouts" tab.'))));
+        }
+        if (acts.childNodes.length) el.appendChild(acts);
+        return el;
+      }
+
+      function filters(on) {
+        var f = [[T('Все', 'All'), 'all'], ['Mercury', 'm'], ['Wise', 'w'], ['Payoneer', 'p'], ['Kraken', 'k']];
+        return h('div.recon-filt', null, f.map(function (x) { return h('span' + (x[1] === on ? '.on' : ''), null, x[0]); }));
+      }
+
+      function renderMain() {
+        mainP.innerHTML = '';
+        ['fig_fig1', 'fig_fig2', 'drive', 'dupBtn', 'payBtn', 'krBtn'].forEach(function (k) { N[k] = null; });
+        if (!S.loaded) {
+          N.load = h('button.btn.btn-acc', { type: 'button', onclick: load, disabled: S.busy ? '' : null }, icon('bank'), T('Загрузить выписки за октябрь', 'Load the October statements'));
+          mainP.appendChild(h('div.recon-list', null,
+            h('p.recon-empty', null, T('Выписки Mercury, Wise и Payoneer за месяц. Сервис разложит платежи сам, вам останутся только открытые.', 'Mercury, Wise and Payoneer statements for the month. The service sorts the payments itself, only the open ones are left for you.')),
+            h('div', null, N.load),
+            S.P.length ? S.P.map(row) : null));
+          winMain.note('');
+          S.flash = null;
+          return;
+        }
+        if (S.tab === 'todo') {
+          var open = S.P.filter(function (p) { return p.st === 'open'; });
+          mainP.appendChild(filters('all'));
+          mainP.appendChild(h('div.recon-list', null, open.length ? open.map(row) : h('p.recon-empty', null, T('Открытых платежей нет. Месяц можно закрывать.', 'No open payments. The month can be closed.'))));
+        } else if (S.tab === 'done') {
+          mainP.appendChild(h('div.recon-list', null, S.P.filter(function (p) { return p.st !== 'open'; }).map(row)));
+        } else if (S.tab === 'attn') {
+          mainP.appendChild(renderAttn());
+        } else {
+          mainP.appendChild(renderStaff());
+        }
+        winMain.note(T(openN() + ' открыто из ' + S.P.length, openN() + ' open of ' + S.P.length));
+        S.flash = null;
+      }
+
+      function renderAttn() {
+        var box = h('div.recon-list');
+        if (!S.dup) {
+          N.dupBtn = h('button.btn.btn-acc.btn-sm', { type: 'button', onclick: function () { solveDup(true); } }, icon('x'), T('Списали дважды: ждём возврат', 'Charged twice: refund expected'));
+          box.appendChild(h('div.recon-row.open' + (S.flash === 'dup' ? '.hot' : ''), null,
+            h('div.recon-r1', null, h('b', null, T('Два одинаковых платежа', 'Two identical payments')), h('span.recon-sum', null, amt(96))),
+            h('div.recon-r2', null, h('span', null, 'Notion · Mercury · 07.10'), h('span.tg.tg-wait', null, T('двойное списание', 'double charge'))),
+            h('div.recon-why', null, icon('warn'), h('span', null, T('Инвойс один, платежей два. Что это?', 'One invoice, two payments. What is it?'))),
+            S.role === 'fin' ? h('div.recon-acts', null, N.dupBtn,
+              h('button.btn.btn-sm', { type: 'button', onclick: function () { solveDup(false); } }, T('Оба верны, два места', 'Both are right, two seats'))) : null));
+        }
+        box.appendChild(h('div.recon-row', null,
+          h('div.recon-r1', null, h('b', null, T('Цена подписки выросла', 'Subscription price went up')), h('span.recon-sum', null, '+20%')),
+          h('div.recon-r2', null, h('span', null, 'Adobe · ' + T('3 месяца подряд 49,99, теперь 59,99', '3 months at 49.99, now 59.99'))),
+          h('div.recon-why', null, icon('chart'), h('span', null, T('Сигнал из истории платежей, решает человек', 'A signal from payment history, a person decides')))));
+        box.appendChild(h('div.recon-row', null,
+          h('div.recon-r1', null, h('b', null, T('Ожидаемый платёж не пришёл', 'An expected payment did not arrive')), h('span.recon-sum', null, '—')),
+          h('div.recon-r2', null, h('span', null, 'GitHub · ' + T('платили каждый месяц', 'paid every month')))));
+        if (S.dup) box.appendChild(h('p.okl.in-pop', null, icon('check'), h('span', null, T('Двойное списание разобрано, причина записана у платежа', 'The double charge is handled, the reason is saved on the payment'))));
+        return box;
+      }
+
+      function stLabel(e) {
+        if (e.st === 'paid') return h('span.st.ok', null, T('выплачен, сверен', 'paid, matched'));
+        if (e.st === 'sent') return h('span.st.info', null, T('отправлен, ждёт выплаты', 'submitted, awaiting payout'));
+        return h('span.st.wait', null, T('черновик', 'draft'));
+      }
+      function renderStaff() {
+        var box = h('div');
+        var tb = h('tbody');
+        S.E.forEach(function (e) {
+          tb.appendChild(h('tr' + (S.flash === e.id ? '.in' : '') + (e.id === 'me' ? '.sel' : ''), null,
+            h('td', null, h('b', null, e.name)),
+            h('td.num', null, e.total == null ? '—' : amt(e.total)),
+            h('td', null, e.via || '—'),
+            h('td', null, stLabel(e)),
+            h('td', null, e.st === 'draft' ? '—' : (S.role === 'fin' ? h('span.tg.tg-acc', null, 'PDF') : h('span.tg.tg-hum', null, T('нет доступа', 'no access'))))));
+        });
+        box.appendChild(h('div.recon-tw', null, h('div.sheet-w', null, h('table.sheet', null,
+          h('thead', null, h('tr', null, h('th', null, T('Сотрудник', 'Employee')), h('th.num', null, T('Итог', 'Total')), h('th', null, T('Выплата', 'Payout')), h('th', null, T('Статус', 'Status')), h('th', null, 'PDF'))), tb))));
+        var list = h('div.recon-list');
+        var me = E('me');
+        if (me.st === 'sent' && !S.kraken) {
+          N.krBtn = h('button.btn.btn-acc', { type: 'button', onclick: loadKraken, disabled: S.busy || S.role !== 'fin' ? '' : null }, icon('bank'), T('Загрузить журнал Kraken', 'Load the Kraken log'));
+          list.appendChild(h('div', null, N.krBtn));
+        } else if (me.st === 'draft') {
+          list.appendChild(h('p.recon-empty', null, T('Инвойс Анны ещё черновик. Выплату сверять не с чем.', 'Anna\'s invoice is still a draft. There is nothing to match a payout to.')));
+        }
+        if (S.kraken && !S.payout) {
+          N.payBtn = h('button.btn.btn-ok.btn-sm', { type: 'button', onclick: function () { payout(true); } }, icon('check'), T('Это он', 'That is it'));
+          list.appendChild(h('div.recon-row.open.hot', null,
+            h('div.recon-r1', null, h('b', null, 'Kraken · Withdrawal USDT TRC-20'), h('span.recon-sum', null, amt(3222, 'USDT'))),
+            h('div.recon-r2', null, h('span', null, '31.10'), h('span.tg.tg-acc', null, T('подбор', 'match'))),
+            h('div.recon-why', null, icon('search'), h('span', null, T('Инвойс ' + ME.name + ' за октябрь на криптовыплату, сумма сходится ±1', ME.name + '\'s October invoice for a crypto payout, the amount matches ±1'))),
+            S.role === 'fin' ? h('div.recon-acts', null, N.payBtn, h('button.btn.btn-sm', { type: 'button', onclick: function () { payout(false); } }, T('Не он', 'Not this one'))) : null));
+        }
+        if (S.payout) list.appendChild(h('p.okl.in-pop', null, icon('check'), h('span', null, T('Выплата закрыта: «зарплата, выплата сотруднику через Kraken». В тратах на подписки не считается.', 'Payout closed as "salary, staff payout via Kraken". It does not count as subscription spend.'))));
+        if (list.childNodes.length) box.appendChild(list);
+        return box;
+      }
+
+      /* ---------- employee window ---------- */
+      function renderMe() {
+        meP.innerHTML = '';
+        N.rcpt = N.submit = N.usdt = null;
+        var me = E('me'), sent = me.st !== 'draft';
+        meP.appendChild(h('p.recon-who', null, T('Роль: сотрудник · ', 'Role: employee · ') + ME.name));
+        var segM = ctx.seg(T('Выплата', 'Payout'), [['bank', T('Банковский счёт', 'Bank account')], ['usdt', 'USDT TRC-20']], S.method, function (v) { if (!sent) setMethod(v); });
+        N.usdt = sent ? null : segM.btn('usdt');
+        var lines = h('div', null,
+          h('div.recon-line', null, h('span', null, 'Salary', h('small', null, T('оклад 3 000, с 15.10 3 300: 9 + 13 рабочих дней из 22', 'base 3,000, from 15.10 3,300: 9 + 13 of 22 working days'))), h('b', null, money(SAL))),
+          h('div.recon-line', null, h('span', null, 'Vacation', h('small', null, T('остаток отпуска из HR-системы: 12 дней', 'vacation balance from the HR system: 12 days'))), h('b', null, '0,00')),
+          S.rcpt
+            ? h('div.recon-line' + (S.flash === 'rcpt' ? '.in-pop' : ''), null, h('span', null, 'Sport', h('small', null, T('чек: 180,00 PLN, 12.10 · курс NBP 0,2512', 'receipt: 180.00 PLN, 12.10 · NBP rate 0.2512'))), h('b', null, money(SPORT)))
+            : h('div.recon-line', null, h('span', null, 'Sport', h('small', null, S.busyR ? T('читаю фото чека…', 'reading the receipt photo…') : T('нет чека', 'no receipt'))), h('b', null, '—')));
+        meP.appendChild(h('div.recon-me', null, lines,
+          h('div.recon-tot', null, h('span.recon-who', null, T('Итог', 'Total')), h('b', null, money(S.rcpt ? TOTAL : SAL) + ' USD')),
+          segM));
+        if (!sent) {
+          N.rcpt = S.rcpt ? null : h('button.btn.btn-sm', { type: 'button', onclick: addReceipt, disabled: S.busyR ? '' : null }, icon('image'), T('Фото чека', 'Receipt photo'));
+          N.submit = h('button.btn.btn-acc', { type: 'button', onclick: submit }, icon('send'), T('Отправить бухгалтеру', 'Send to the accountant'));
+          meP.appendChild(h('div.recon-acts', { style: 'margin-top:10px' }, N.rcpt, N.submit));
+          if (S.blocked && !S.rcpt) meP.appendChild(h('p.nol.in-pop', { style: 'margin-top:10px' }, icon('x'), h('span', null, T('Отправить нельзя: у расхода Sport нет чека', 'Cannot send: the Sport expense has no receipt'))));
+        } else {
+          meP.appendChild(h('div.recon-pdf' + (S.flash === 'pdf' ? '.in-pop' : ''), { style: 'margin-top:10px' }, icon('doc'),
+            h('span', null, h('b', null, ME.file), h('br'), T('№ 14 · подпись · реквизиты ', 'No. 14 · signature · payout details ') + (S.method === 'usdt' ? 'USDT TRC-20' : T('счёта', 'bank account')))));
+          meP.appendChild(h('p.okl', { style: 'margin-top:8px' }, icon('sheet'), h('span', null, T('Строка записана в сводную бухгалтерии', 'Row written to the accounting summary sheet'))));
+          if (me.st === 'paid') meP.appendChild(h('p.okl.in-pop', { style: 'margin-top:6px' }, icon('check'), h('span', null, T('Выплата пришла и сверена финансами', 'The payout arrived and finance matched it'))));
+        }
+      }
+
+      function render() { renderMain(); renderMe(); counts(); say(); }
+
+      /* ---------- actions ---------- */
+      function load() {
+        if (S.loaded || S.busy) return;
+        S.busy = true; S.tab = 'todo'; segTab.set('todo');
+        var all = rows(), i = 0;
+        log.add(tm(1), T('Выписки загружены: Mercury, Wise, Payoneer', 'Statements loaded: Mercury, Wise, Payoneer'));
+        render();
+        (function step() {
+          if (i >= all.length) {
+            S.busy = false; S.loaded = true;
+            log.add(tm(1), T(autoN() + ' платежей закрыто само, ' + openN() + ' открыто, у каждого причина', autoN() + ' payments closed by themselves, ' + openN() + ' open, each with a reason'), 'sys');
+            render(); hold(1500); ctx.focus(winMain);
+            return;
+          }
+          var p = all[i++]; S.P.push(p); S.flash = p.id;
+          if (p.st === 'auto') log.add(tm(1), p.raw + ': ' + p.why, 'sys');
+          if (p.st === 'rule') log.add(tm(1), p.raw + ': ' + p.why, 'sys');
+          render();
+          ctx.later(step, 520);
         })();
       }
-      /* autoplay waits while the visitor reads what just happened; manual clicks are never blocked */
-      function hold(ms) { var n = ++holdN; holding = true; ctx.later(function () { if (n === holdN) holding = false; }, ms); }
-      function hover(r) {
-        r.el.addEventListener('mouseenter', function () { if (r.mate) { r.el.classList.add('peer'); r.mate.el.classList.add('peer'); } });
-        r.el.addEventListener('mouseleave', unpeer);
+      function acceptFigma() {
+        if (S.figma) return;
+        S.figma = true;
+        var a = P('fig1'), b = P('fig2');
+        close(a, 'Figma', T('Вендор указан вами, инвойс FG-2210 на ту же сумму', 'Vendor set by you, invoice FG-2210 for the same amount'));
+        log.add(tm(2), T('PAYPAL *FIGMA → Figma, написание запомнено', 'PAYPAL *FIGMA → Figma, spelling remembered'));
+        render(); hold(1200);
+        ctx.later(function () {
+          b.st = 'auto'; b.vendor = 'Figma'; b.why = T('Вендор узнан по запомненному написанию, инвойс FG-2211', 'Vendor recognised by the remembered spelling, invoice FG-2211');
+          S.flash = 'fig2';
+          log.add(tm(1), T('Второй платёж PAYPAL *FIGMA узнан сам и сверен', 'The second PAYPAL *FIGMA payment was recognised and matched by itself'), 'sys');
+          render(); hold(1400);
+        }, 900);
       }
-      function unpeer() { Array.prototype.forEach.call(ctx.body.querySelectorAll('.recon-row.peer'), function (n) { n.classList.remove('peer'); }); }
-
-      function invRow(d) {
-        var r = { d: d, mate: null, ic: 'doc' };
-        r.pair = h('span.recon-pair', null, icon('doc'));
-        r.chip = h('span.tg.tg-hum.recon-tg', null, T('PDF не прочитан', 'PDF not read yet'));
-        r.peer = h('small');
-        r.x = h('div.recon-x', { hidden: true });
-        r.g = h('p.recon-g', { hidden: true });
-        r.more = h('div');
-        r.el = h('div.recon-row', null, r.pair, h('div.recon-b', null,
-          h('div.recon-head', null,
-            h('div.recon-name', null, d.raw),
-            h('div.recon-meta', null, MON[d.per].of),
-            h('div.recon-sum', null, amt(d.amt))),
-          r.x, r.g, h('div.recon-foot', null, r.chip, r.peer), r.more));
-        hover(r);
-        return r;
+      function fromDrive() {
+        if (S.drive || S.busy) return;
+        S.busy = true;
+        log.add(tm(2), T('Обновить из Drive: папка LumaAI', 'Refresh from Drive: LumaAI folder'));
+        ctx.now(T('Сервис ищет новый PDF в папке вендора…', 'The service looks for a new PDF in the vendor folder…'));
+        ctx.later(function () {
+          log.add(tm(1), T('Найден LUMA-0931.pdf, прочитан автоматически: 300,00 USD, 14.10', 'Found LUMA-0931.pdf, read automatically: 300.00 USD, 14.10'), 'sys');
+          ctx.later(function () {
+            S.busy = false; S.drive = true;
+            close(P('luma'), 'LumaAI', T('Инвойс LUMA-0931 из Drive, PDF прочитан сам, сумма сходится', 'Invoice LUMA-0931 from Drive, the PDF was read by itself, the amount matches'));
+            S.mine--; render(); hold(1300);
+          }, 800);
+        }, 900);
       }
-      function payRow(d) {
-        var r = { d: d, mate: null, ic: 'card' };
-        r.pair = h('span.recon-pair', null, icon('card'));
-        r.g = h('p.recon-g', { hidden: true });
-        r.el = h('div.recon-row', null, r.pair, h('div.recon-b', null,
-          h('div.recon-head.two', null,
-            h('div.recon-name.raw', null, d.raw),
-            h('div.recon-meta', null, h('span.tg.tg-hum', null, d.bank), d.date),
-            h('div.recon-sum', null, amt(d.amt))),
-          r.g));
-        hover(r);
-        return r;
+      function noInvoice(p) {
+        close(p, null, T('Инвойс не нужен: закрыто вами, причина записана', 'No invoice needed: closed by you, reason saved'));
+        log.add(tm(2), p.raw + T(': инвойс не нужен', ': no invoice needed'));
+        render();
       }
-
-      /* ---------- role: blur every amount, the run itself is untouched ---------- */
-      function paintRole() {
-        var off = role === 'nofin';
-        note.hidden = !off;
-        Array.prototype.forEach.call(ctx.body.querySelectorAll('.recon-amt'), function (n) { n.classList.toggle('blur', off); });
+      function solveDup(twice) {
+        if (S.dup) return;
+        S.dup = true;
+        close(P('not2'), 'Notion', twice ? T('Двойное списание, ждём возврат', 'Double charge, refund expected') : T('Второе место, инвойс тот же', 'Second seat, same invoice'));
+        log.add(tm(2), 'NOTION LABS: ' + (twice ? T('двойное списание, ждём возврат', 'double charge, refund expected') : T('оба платежа верны', 'both payments are right')));
+        render(); hold(1500);
+      }
+      function setMethod(v) {
+        S.method = v; log.add(tm(1), T('Сотрудник: выплата ', 'Employee: payout ') + (v === 'usdt' ? 'USDT TRC-20' : T('на банковский счёт', 'to a bank account')));
+        render(); hold(900);
+      }
+      function addReceipt() {
+        if (S.rcpt || S.busyR) return;
+        S.busyR = true; render();
+        ctx.later(function () {
+          S.busyR = false; S.rcpt = true; S.flash = 'rcpt';
+          log.add(tm(2), T('Чек прочитан: сумма 180,00 PLN и дата 12.10 вписаны сами, курс NBP на дату чека', 'Receipt read: 180.00 PLN and 12.10 filled in by themselves, NBP rate on the receipt date'), 'sys');
+          render(); hold(1200); ctx.focus(winMe);
+        }, 1300);
+      }
+      function submit() {
+        var me = E('me');
+        if (me.st !== 'draft') return;
+        if (!S.rcpt) {
+          S.blocked = true;
+          log.add(tm(1), T('Отправка остановлена: у расхода нет чека', 'Sending stopped: an expense has no receipt'), 'warn');
+          render(); hold(1500); return;
+        }
+        me.st = 'sent'; me.total = TOTAL; me.via = S.method === 'usdt' ? 'USDT' : T('счёт', 'bank');
+        S.flash = 'pdf';
+        log.add(tm(2), T('Инвойс отправлен бухгалтеру: № 14, PDF с подписью', 'Invoice sent to the accountant: No. 14, signed PDF'));
+        log.add(tm(1), T('Строка Анны записана в сводную за октябрь', 'Anna\'s row written to the October summary sheet'), 'sys');
+        render(); hold(1500); ctx.focus(winMe);
+      }
+      function loadKraken() {
+        if (S.kraken || S.busy) return;
+        S.busy = true; render();
+        ctx.later(function () {
+          S.busy = false; S.kraken = true;
+          S.P.push({ id: 'kr', src: 'Kraken', raw: 'Withdrawal USDT TRC-20', sum: 3222, st: 'open', k: 'kraken' });
+          log.add(tm(2), T('Журнал Kraken: вывод 3 222 USDT, подобран инвойс сотрудника', 'Kraken log: 3,222 USDT withdrawal, an employee invoice matched'), 'sys');
+          render(); hold(1300); ctx.focus(winMain);
+        }, 1100);
+      }
+      function payout(yes) {
+        if (S.payout) return;
+        if (!yes) { log.add(tm(1), T('«Не он»: подбор снят, платёж остался открытым', '"Not this one": the match is dropped, the payment stays open'), 'warn'); hold(800); return; }
+        S.payout = true;
+        var p = P('kr'); p.st = 'you'; p.vendor = ME.name; p.why = T('Выплата сотруднику через Kraken, инвойс за 10.2026', 'Staff payout via Kraken, invoice for 10.2026'); S.mine++;
+        E('me').st = 'paid'; S.flash = 'me';
+        log.add(tm(2), T('Финансы: «Это он». Выплата Анне сверена', 'Finance: "That is it". Anna\'s payout matched'));
+        render(); hold(1500);
+      }
+      function setTab(v) {
+        if (!S.loaded) { segTab.set(S.tab); return; }
+        S.tab = v; segTab.set(v);
+        if (v === 'attn') S.dupSeen = true;
+        render(); hold(900);
       }
       function setRole(v) {
-        role = v;
-        if (v === 'nofin') seen.nofin = true;
-        paintRole();
-        hint();
-        hold(v === 'nofin' ? 4600 : 1600);
+        S.role = v; segRole.set(v);
+        if (v === 'none') S.blurSeen = true;
+        log.add(tm(1), v === 'none' ? T('Вход без роли «финансы»: суммы скрыты, PDF не показывается', 'Signed in without the finance role: amounts hidden, PDFs not shown') : T('Вход с ролью «финансы»', 'Signed in with the finance role'), v === 'none' ? 'warn' : null);
+        render(); hold(1500);
+        if (v === 'none' && S.payout && !S.ended) {
+          S.ended = true;
+          ctx.end(T('<b>Месяц закрыт: каждый платёж сверен или закрыт с причиной.</b> Сотрудник сам заполнил инвойс, финансы подтвердили выплату одной кнопкой.', '<b>The month is closed: every payment is matched or closed with a reason.</b> The employee filled in the invoice, finance confirmed the payout with one button.'));
+        }
       }
 
-      function hint() {
-        var p = S.phase, m;
-        if (p === 'new') m = T('В почту пришли 5 счетов в PDF. Нажмите <b>«Прочитать счета»</b>: модель разберёт каждый в строгую схему.', 'Five PDF invoices have arrived by email. Press <b>"Read the invoices"</b>: a model reads each one into a strict schema.');
-        else if (p === 'reading') m = T('Модель читает PDF. Смотрите, как два разных написания Apple становятся одним поставщиком.', 'The model is reading the PDFs. Watch two different spellings of Apple become one vendor.');
-        else if (p === 'read') m = T('Счета прочитаны. Теперь нажмите <b>«Сопоставить»</b>: платежи со счетами сводит обычный код, без модели.', 'The invoices are read. Now press <b>"Match"</b>: plain code pairs payments with invoices, no model involved.');
-        else if (p === 'matching') m = T('Идёт сопоставление. У пары одна буква в обоих списках.', 'Matching is running. A pair gets the same letter in both lists.');
-        else if (p === 'human') m = S.tried
-          ? T('Система не дала связать зарплату со счётом подрядчика. Нажмите <b>«Оставить без пары»</b>.', 'The system refused to link payroll to a contractor invoice. Press <b>"Leave unmatched"</b>.')
-          : T('Ваш ход, вы финансист. Попробуйте <b>«Связать вручную»</b> или сразу нажмите <b>«Оставить без пары»</b>.', 'Your turn, you are the finance person. Try <b>"Link manually"</b> or go straight to <b>"Leave unmatched"</b>.');
-        else m = role === 'nofin'
-          ? T('Суммы размыты, сама сверка на месте. Верните роль <b>«Финансы»</b>.', 'The amounts are blurred, the reconciliation itself is intact. Switch back to <b>"Finance"</b>.')
-          : seen.nofin
-            ? T('Это весь сценарий. Кнопка <b>«Сначала»</b> запускает сверку заново.', 'That is the whole scenario. <b>"Reset"</b> starts the reconciliation again.')
-            : T('Сверка закончена. Переключите роль на <b>«Без роли финансов»</b> и посмотрите на суммы.', 'The reconciliation is finished. Switch the role to <b>"No finance role"</b> and look at the amounts.');
-        ctx.now(m);
+      /* ---------- hint line ---------- */
+      function say() {
+        if (S.busy) return;
+        if (!S.loaded) { ctx.now(T('Финансы. Нажмите <b>«Загрузить выписки за октябрь»</b>.', 'Finance. Press <b>"Load the October statements"</b>.')); return; }
+        if (!S.figma) { ctx.now(T('Открыто ' + openN() + '. У Figma подсказка: нажмите <b>«Да, это Figma»</b>, второй её платёж узнается сам.', openN() + ' open. Figma has a suggestion: press <b>"Yes, it is Figma"</b>, its second payment gets recognised by itself.')); return; }
+        if (!S.drive) { ctx.now(T('У LumaAI нет инвойса в папке. Нажмите <b>«Обновить из Drive»</b>.', 'LumaAI has no invoice in its folder. Press <b>"Refresh from Drive"</b>.')); return; }
+        if (!S.dup) { ctx.now(T('Откройте <b>«Обратите внимание»</b> и решите, что с двумя платежами Notion.', 'Open <b>"Heads up"</b> and decide on the two Notion payments.')); return; }
+        if (E('me').st === 'draft') {
+          if (!S.blocked) { ctx.now(T('Теперь сотрудник справа. Попробуйте <b>«Отправить бухгалтеру»</b> без чека.', 'Now the employee on the right. Try <b>"Send to the accountant"</b> without a receipt.')); return; }
+          if (!S.rcpt) { ctx.now(T('Нажмите <b>«Фото чека»</b>: сумма и дата впишутся сами.', 'Press <b>"Receipt photo"</b>: the amount and date fill in by themselves.')); return; }
+          if (S.method !== 'usdt') { ctx.now(T('Выберите выплату <b>USDT TRC-20</b> и отправьте инвойс.', 'Pick the <b>USDT TRC-20</b> payout and send the invoice.')); return; }
+          ctx.now(T('Нажмите <b>«Отправить бухгалтеру»</b>.', 'Press <b>"Send to the accountant"</b>.')); return;
+        }
+        if (!S.payout) {
+          if (S.tab !== 'staff') { ctx.now(T('Финансы: откройте <b>«Выплаты сотрудникам»</b>.', 'Finance: open <b>"Staff payouts"</b>.')); return; }
+          if (!S.kraken) { ctx.now(T('Нажмите <b>«Загрузить журнал Kraken»</b>: выплата найдёт инвойс сама.', 'Press <b>"Load the Kraken log"</b>: the payout finds the invoice itself.')); return; }
+          ctx.now(T('Сумма сходится. Нажмите <b>«Это он»</b>.', 'The amount matches. Press <b>"That is it"</b>.')); return;
+        }
+        if (S.role === 'fin') { ctx.now(T('Посмотрите, что видит коллега <b>без роли «финансы»</b>.', 'See what a colleague <b>without the finance role</b> sees.')); return; }
+        ctx.now(T('Без роли «финансы» суммы скрыты, PDF не открывается. Верните роль переключателем.', 'Without the finance role amounts are hidden and PDFs do not open. Switch the role back.'));
       }
 
-      /* ---------- render of a fresh run ---------- */
-      function base() {
-        invList.innerHTML = ''; payList.innerHTML = '';
-        inv = {}; pay = {};
-        INV.forEach(function (d) { inv[d.id] = invRow(d); invList.appendChild(inv[d.id].el); });
-        PAY.forEach(function (d) { pay[d.id] = payRow(d); payList.appendChild(pay[d.id].el); });
-        readBtn.disabled = false; readBtn.className = 'btn btn-acc';
-        matchBtn.disabled = true; matchBtn.className = 'btn';
-        linkBtn = leaveBtn = btnRow = refusal = null;
-        winInv.note(T('5 PDF во вложениях', '5 PDF attachments'));
-        log.clear();
-        cnt.set('closed', '0'); cnt.set('calls', '0'); cnt.set('human', '0'); cnt.set('period', '0');
-        ctx.end(null);
-        paintRole();
-        hint();
-      }
       function start() {
         ctx.clearTimers();
-        S = fresh(); clock = 5; holdN++; holding = false;
-        base();
+        S = fresh(); clock = 0; N = {};
+        segRole.set('fin'); segTab.set('todo');
+        log.clear();
+        cnt.set('open', '—'); cnt.set('auto', '—'); cnt.set('you', '0'); cnt.set('paid', '1');
+        ctx.end(null);
+        render();
       }
-
-      /* ---------- step 1: the model reads each PDF into a strict schema ---------- */
-      function read() {
-        if (S.phase !== 'new') return;
-        S.phase = 'reading'; S.busy = true;
-        readBtn.disabled = true; readBtn.classList.remove('btn-acc');
-        log.add(tm(0), T('В почте 5 счетов в PDF. Модель читает каждый в строгую схему', '5 PDF invoices in the mailbox. A model reads each one into a strict schema'), 'sys');
-        hint();
-        readOne(0);
-      }
-      function readOne(i) {
-        if (i >= INV.length) { readDone(); return; }
-        var r = inv[INV[i].id], d = r.d;
-        var again = INV.slice(0, i).some(function (x) { return x.norm === d.norm; });
-        r.el.classList.add('hot');
-        chip(r.chip, 'tg-acc', T('модель читает', 'the model is reading'));
-        r.x.appendChild(h('span.tg.tg-info.in-pop', null, T('строгая схема', 'strict schema')));
-        r.x.hidden = false;
-        ctx.focus(r.el);
-        /* fields are built at the moment they appear, so a role switch in between cannot leave a stale amount */
-        var fields = [
-          function () { return [T('поставщик', 'vendor') + ' → ', h('b', null, d.norm)]; },
-          function () { return [T('№ ', 'no. '), h('b', null, d.no)]; },
-          function () { return [T('период ', 'period '), h('b', null, MON[d.per].short)]; },
-          function () { return [T('сумма ', 'amount '), h('b', null, amt(d.num + ' USD'))]; }
-        ];
-        var steps = fields.map(function (f, k) {
-          return [k ? 320 : 520, function () { r.x.appendChild(h('span.in-pop', null, f())); }];
-        });
-        steps.push([340, function () {
-          r.el.classList.remove('hot');
-          chip(r.chip, 'tg-wait', T('ждёт платёж', 'waiting for a payment'));
-          S.calls++; cnt.set('calls', String(S.calls));
-          winInv.note(T('прочитано ', 'read ') + S.calls + T(' из ', ' of ') + INV.length);
-          log.add(tm(3), T('Прочитан «' + d.raw + '»: ' + (again ? 'тот же поставщик ' : 'поставщик ') + d.norm + ', ' + MON[d.per].name,
-            'Read "' + d.raw + '": ' + (again ? 'the same vendor ' : 'vendor ') + d.norm + ', ' + MON[d.per].name), 'sys');
-        }]);
-        steps.push([380, function () { readOne(i + 1); }]);
-        chain(steps);
-      }
-      function readDone() {
-        S.phase = 'read'; S.busy = false;
-        matchBtn.disabled = false; matchBtn.classList.add('btn-acc');
-        log.add(tm(1), T('Счета прочитаны: 5 вызовов модели. Дальше работает обычный код', 'Invoices are read: 5 model calls. Plain code takes over from here'), 'sys');
-        hint();
-        ctx.focus(toolsPay);
-      }
-
-      /* ---------- step 2: plain code matches payments to invoices ---------- */
-      function match() {
-        if (S.phase !== 'read') return;
-        S.phase = 'matching'; S.busy = true;
-        matchBtn.disabled = true; matchBtn.classList.remove('btn-acc');
-        log.add(tm(14), T('Сопоставление запущено: платежи Mercury, Wise и Payoneer против счетов. Модель не вызывается', 'Matching started: payments from Mercury, Wise and Payoneer against the invoices. No model call'), 'sys');
-        hint();
-        chain([
-          [700, function () { seek('figma'); }],
-          [1500, function () { close('figma'); }],
-          [1000, function () { seek('cloud'); }],
-          [1500, function () { close('cloud'); }],
-          [1100, guardOn],
-          [3200, function () { close('apl8'); }],
-          [1700, function () { close('apl9'); }],
-          [600, caught],
-          [1300, candidate],
-          [2400, ask]
-        ]);
-      }
-      function seek(id) {
-        var r = inv[id], p = pay[r.d.pay];
-        r.el.classList.add('hot'); p.el.classList.add('hot');
-        chip(r.chip, 'tg-acc', T('ищу платёж', 'looking for a payment'));
-        ctx.focus(r.el);
-      }
-      function close(id) {
-        var r = inv[id], p = pay[r.d.pay], d = r.d, L = d.pair, apple = d.norm === 'Apple';
-        r.el.classList.remove('hot'); p.el.classList.remove('hot');
-        r.mate = p; p.mate = r;
-        badge(r, 'on', L, T('пара ', 'pair ') + L); badge(p, 'on', L, T('пара ', 'pair ') + L);
-        chip(r.chip, 'tg-ok', T('закрыто правилом, без модели', 'closed by a rule, no model call'));
-        r.peer.textContent = T('платёж: ', 'payment: ') + p.d.bank + ' · ' + p.d.date;
-        line(p.g, 'ok', 'link', T('счёт ' + d.norm + ' ' + MON[d.per].of, d.norm + ' invoice ' + MON[d.per].of));
-        if (apple) line(r.g, 'ok', 'shield', T('та же сумма в двух месяцах: период сверен, это ' + MON[d.per].name, 'same amount in two months: period checked, it is ' + MON[d.per].name));
-        S.closed++; cnt.set('closed', String(S.closed));
-        winInv.note(T('закрыто ', 'closed ') + S.closed + T(' из ', ' of ') + INV.length);
-        log.add(tm(1), apple
-          ? T('Пара ' + L + ': счёт Apple ' + MON[d.per].of + ' и платёж ' + p.d.bank + ' ' + p.d.date + '. Период совпал, закрыто правилом',
-            'Pair ' + L + ': the Apple invoice ' + MON[d.per].of + ' and the ' + p.d.bank + ' payment of ' + p.d.date + '. The period matches, closed by a rule')
-          : T('Пара ' + L + ': ' + d.norm + ' и платёж ' + p.d.bank + ' ' + p.d.date + '. Поставщик, сумма и период совпали, закрыто правилом',
-            'Pair ' + L + ': ' + d.norm + ' and the ' + p.d.bank + ' payment of ' + p.d.date + '. Vendor, amount and period agree, closed by a rule'), 'sys');
-      }
-      /* guard from a real incident: the same amount in two months, so the period decides */
-      function guardOn() {
-        ['apl8', 'apl9'].forEach(function (id) {
-          var r = inv[id];
-          r.el.classList.add('hot'); pay[r.d.pay].el.classList.add('hot');
-          chip(r.chip, 'tg-acc', T('сверяю период', 'checking the period'));
-          line(r.g, '', 'shield', T('та же сумма в двух месяцах: сверяю период', 'same amount in two months: checking the period'));
-        });
-        log.add(tm(0), T('Apple: одна сумма в августе и в сентябре. По сумме подходят оба платежа, сверяю период', 'Apple: the same amount in August and in September. Both payments fit by amount, checking the period'), 'warn');
-        ctx.focus(inv.apl8.el);
-      }
-      function caught() {
-        cnt.set('period', '1');
-        log.add(tm(0), T('Ошибка периода поймана: по одной сумме сентябрьский платёж лёг бы на августовский счёт', 'Period mistake caught: by amount alone the September payment would have landed on the August invoice'), 'sys');
-      }
-      function candidate() {
-        var r = inv.design, p = pay.ppay;
-        r.el.classList.add('hot'); p.el.classList.add('hot');
-        chip(r.chip, 'tg-acc', T('ищу платёж', 'looking for a payment'));
-        log.add(tm(1), T('Design contractor: по сумме подходит только PAYROLL SEP, а это зарплатный платёж', 'Design contractor: only PAYROLL SEP fits by amount, and that is a payroll payment'), 'warn');
-        ctx.focus(r.el);
-      }
-      /* the risky pair is not closed by code: a human decides */
-      function ask() {
-        var r = inv.design, p = pay.ppay;
-        r.el.classList.remove('hot'); p.el.classList.remove('hot');
-        r.el.classList.add('risk'); p.el.classList.add('risk');
-        r.mate = p; p.mate = r;
-        badge(r, 'risk', '!', T('рискованная пара', 'risky pair')); badge(p, 'risk', '!', T('рискованная пара', 'risky pair'));
-        chip(r.chip, 'tg-bad', T('рискованная пара: зарплата против счёта подрядчика → человеку', 'risky pair: payroll against a contractor invoice → to a human'));
-        line(p.g, 'bad', 'warn', T('та же сумма, что в счёте Design contractor, но это зарплата', 'same amount as the Design contractor invoice, but this is payroll'));
-        linkBtn = h('button.btn', { type: 'button', onclick: tryLink }, icon('link'), T('Связать вручную', 'Link manually'));
-        leaveBtn = h('button.btn', { type: 'button', onclick: leave }, icon('x'), T('Оставить без пары', 'Leave unmatched'));
-        btnRow = h('div.recon-btns.in-pop', null, linkBtn, leaveBtn);
-        refusal = h('p.recon-g', { hidden: true });
-        r.more.appendChild(btnRow); r.more.appendChild(refusal);
-        cnt.set('human', '1');
-        log.add(tm(0), T('Рискованная пара не закрыта. Счёт передан финансисту с причиной', 'The risky pair is not closed. The invoice goes to a finance person with the reason'), 'sys');
-        S.phase = 'human'; S.busy = false;
-        hint();
-        ctx.focus(r.el);
-      }
-
-      /* ---------- the visitor is the finance person ---------- */
-      function tryLink() {
-        if (S.phase !== 'human' || S.tried) return;
-        S.tried = true;
-        linkBtn.disabled = true; leaveBtn.classList.add('btn-acc');
-        line(refusal, 'bad', 'shield', T('Отказано. Пара «зарплатный платёж и счёт подрядчика» заблокирована: связать её вручную нельзя.', 'Refused. The pair "payroll payment and contractor invoice" is blocked: it cannot be linked by hand.'));
-        log.add(tm(38), T('Ручная связь отклонена: зарплатный платёж нельзя привязать к счёту подрядчика, этот тип пары заблокирован', 'Manual link refused: a payroll payment cannot be linked to a contractor invoice, this pair type is blocked'), 'bad');
-        hint();
-        hold(3800);
-      }
-      function leave() {
-        if (S.phase !== 'human') return;
-        var r = inv.design, p = pay.ppay;
-        S.phase = 'done';
-        r.mate = p.mate = null; unpeer();
-        r.el.classList.remove('risk'); p.el.classList.remove('risk');
-        badge(r, '', ''); badge(p, '', '');
-        chip(r.chip, 'tg-wait', T('без пары: решение человека', 'unmatched: a human decision'));
-        btnRow.remove();
-        line(p.g, 'hum', 'user', T('зарплата: счёт подрядчика к ней не привязан', 'payroll: the contractor invoice is not linked to it'));
-        log.add(tm(17), T('Финансист оставил счёт Design contractor без пары', 'The finance person left the Design contractor invoice unmatched'));
-        ctx.end(T('<b>' + S.closed + ' из ' + INV.length + ' счетов закрыты без человека и без вызова модели на сопоставлении.</b> Рискованную пару система не закрыла сама: она ушла финансисту вместе с причиной.',
-          '<b>' + S.closed + ' of ' + INV.length + ' invoices were closed without a person and with no model call for matching.</b> The system did not close the risky pair on its own: it went to a finance person with the reason.'));
-        hint();
-        hold(4600);
-        ctx.later(function () { ctx.focus(winLog); }, 900);
-      }
-
       start();
 
       return {
-        reset: function () { seen = {}; role = 'fin'; segRole.set('fin'); start(); },
+        reset: function () { start(); },
         next: function () {
-          if (S.busy) return 'wait';
-          if (S.phase === 'done' && seen.nofin && role === 'fin') return null;
-          if (holding) return 'wait';
-          if (S.phase === 'new') return readBtn;
-          if (S.phase === 'read') return matchBtn;
-          if (S.phase === 'human') return S.tried ? leaveBtn : linkBtn;
-          if (!seen.nofin) return segRole.btn('nofin');
-          return segRole.btn('fin');
+          if (S.busy || S.busyR || S.hold) return 'wait';
+          if (!S.loaded) return N.load;
+          if (!S.figma) { if (S.tab !== 'todo') return segTab.btn('todo'); return N.fig_fig1; }
+          if (!S.drive) { if (S.tab !== 'todo') return segTab.btn('todo'); return N.drive; }
+          if (!S.dup) { if (S.tab !== 'attn') return segTab.btn('attn'); return N.dupBtn; }
+          var me = E('me');
+          if (me.st === 'draft') {
+            if (!S.blocked) return N.submit;
+            if (!S.rcpt) return N.rcpt;
+            if (S.method !== 'usdt') return N.usdt;
+            return N.submit;
+          }
+          if (!S.payout) {
+            if (S.tab !== 'staff') return segTab.btn('staff');
+            if (!S.kraken) return N.krBtn;
+            return N.payBtn;
+          }
+          if (S.role === 'fin') return segRole.btn('none');
+          return null;
         }
       };
     }
