@@ -143,10 +143,6 @@
         [T('История продлений', 'Renewal history'), T('все списания по этой подписке', 'every charge of this subscription')]
       ];
       var TOUR = [['stripe', 'one', 'submit'], ['stripe', 'wave', 'submit'], ['paypal', 'one', 'submit'], ['paypal', 'one', 'skip']];
-      /* TEMP-DBG start */
-      var DBG = (/[?&]dbg=(\w+)/.exec(location.search) || [])[1];
-      if (DBG) TOUR = { a: [['stripe', 'one', 'stop']], b: [['stripe', 'wave', 'submit']], c: [['paypal', 'one', 'stopmodal']], d: [['stripe', 'wave', 'stopopen']], e: [['paypal', 'one', 'submit']], f: [['stripe', 'one', 'submit']] }[DBG] || TOUR;
-      /* TEMP-DBG end */
       var HOLD = 2600; /* autoplay leaves the outcome on screen this long before the next scenario */
       var S, seen = {}, ui = {}, stepNodes = [], clock = 0;
       function fresh(sys, kase) { return { sys: sys || 'stripe', kase: kase || 'one', phase: 'idle', secs: 0, docs: 0, clicks: 0, scen: 0, open: false, hold: false }; }
@@ -519,12 +515,6 @@
           if (S.hold) return 'wait';
           if (S.sys !== t[0]) return segSys.btn(t[0]);
           if (S.kase !== t[1]) return segCase.btn(t[1]);
-          /* TEMP-DBG start */
-          if (DBG && S.phase === 'ready' && t[2] === 'stop') { seen[t.join('/')] = true; return null; }
-          if (DBG && S.phase === 'ready' && t[2] === 'stopopen') { if (!S.open) return ui.open; seen[t.join('/')] = true; return null; }
-          if (DBG && S.phase === 'modal' && t[2] === 'stopmodal') { seen[t.join('/')] = true; return null; }
-          if (DBG && S.phase === 'ready' && t[2] === 'stopmodal') return ui.submit;
-          /* TEMP-DBG end */
           if (S.phase === 'modal') return t[2] === 'skip' ? ui.cancel : ui.confirm;
           if (S.phase === 'ready') return t[2] === 'skip' ? (S.open ? ui.skip : ui.open) : ui.submit;
           return arriveBtn;

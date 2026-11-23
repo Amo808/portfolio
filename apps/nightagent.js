@@ -41,7 +41,6 @@
     mount: function (ctx) {
       var T = ctx.T, h = ctx.h, icon = ctx.icon;
       if (!document.getElementById('pf-nightagent-css')) document.head.appendChild(h('style', { id: 'pf-nightagent-css' }, CSS));
-      var DBG = (/[?&]dbg=(\w+)/.exec(location.search) || [])[1]; /* TEMP: remove before finishing */
 
       /* ---------- invented data ---------- */
       var TASKS = [
@@ -221,7 +220,6 @@
           say('02:00', WHO.sys, T('Задача #' + t.n + ' в очереди, сервер готов: запуск', 'Task #' + t.n + ' is queued, the server is ready: starting'));
           ctx.now(T('<b>02:00.</b> Задача есть, сервер готов. Исполнитель работает, человек спит.', '<b>02:00.</b> There is a task and the server is ready. The executor is working, the person is asleep.'));
         }]].concat(exSeq(1, 300), [[600, function () { verify(1); }]], vrSeq(1, cheat));
-        if (DBG === 'reject') { seq.push([300, function () { S.running = false; S.phase = 'done'; }]); play(seq); return; } /* TEMP */
         if (cheat) seq = seq.concat([[2000, redo]], exSeq(2, 600), [[600, function () { verify(2); }]], vrSeq(2, false));
         seq.push([800, morning]);
         play(seq);
@@ -413,14 +411,12 @@
         ]);
       }
 
-      start(DBG === 'reject' || DBG === 'cheatend' ? 'cheat' : 'ok', 0); /* TEMP: start('ok', 0) */
+      start('ok', 0);
 
       return {
         reset: function () { seen = {}; start('ok', 0); },
         next: function () {
           if (S.running || S.hold) return 'wait';
-          if (DBG === 'morning' && S.phase === 'morning') return null; /* TEMP */
-          if (DBG && S.phase === 'done') return null; /* TEMP */
           if (S.phase === 'idle') return actBtn;
           if (S.phase === 'morning') return M.btn;
           for (var i = 0; i < TOUR.length; i++) if (!seen[TOUR[i]]) return segSc.btn(TOUR[i]);

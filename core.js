@@ -201,42 +201,99 @@
       box.addEventListener('click', unfold, true);
     }
 
-    function paintAuto() {
-      autoL.textContent = inst.auto ? T('Остановить', 'Stop') : T('Показать автоматически', 'Play automatically');
-      autoI.firstChild.setAttribute('href', inst.auto ? '#i-stop' : '#i-play');
-      autoBtn.classList.toggle('btn-acc', !inst.auto);
+    // A floating control that stays at the bottom of the visible part of the demo while something is moving:
+    // on a phone the top bar is far away, and the visitor must always be able to stop.
+    var fStop = h('button.btn.btn-sm', { type: 'button', 'data-act': 'pause' }, icon('stop'), T('Остановить', 'Stop'));
+    var fGo = h('button.btn.btn-acc.btn-sm', { type: 'button', 'data-act': 'resume' }, icon('play'), T('Продолжить', 'Continue'));
+    var fReset = h('button.btn.btn-sm', { type: 'button' }, icon('reset'), T('Сначала', 'Reset'));
+    var floatBar = h('div.demo-float', { hidden: true }, fStop, fGo, fReset);
+    box.appendChild(floatBar);
+    inst.paused = false; inst.wasAuto = false; inst.follow = true; inst.moving = false;
+    var movT = null;
+
+    function paint() {
+      autoL.textContent = inst.paused ? T('Продолжить', 'Continue') : inst.auto ? T('Остановить', 'Stop') : T('Показать автоматически', 'Play automatically');
+      autoI.firstChild.setAttribute('href', inst.auto && !inst.paused ? '#i-stop' : '#i-play');
+      autoBtn.classList.toggle('btn-acc', !inst.auto || inst.paused);
+      floatBar.hidden = !(inst.auto || inst.moving || inst.paused);
+      fStop.hidden = inst.paused; fGo.hidden = !inst.paused; fReset.hidden = !inst.paused;
+    }
+    // "moving" = the app has been running its own sequence for more than a moment (not a one-off cosmetic delay)
+    function syncMoving() {
+      var pending = timers.length > 0 && !inst.paused;
+      if (pending) {
+        if (!inst.moving && !movT) movT = setTimeout(function () { movT = null; if (timers.length && !inst.paused) { inst.moving = true; paint(); } }, 600);
+      } else {
+        clearTimeout(movT); movT = null;
+        if (inst.moving && !inst.paused) { inst.moving = false; paint(); }
+      }
+    }
+    function schedule(rec) {
+      rec.start = Date.now();
+      rec.id = setTimeout(function () {
+        var i = timers.indexOf(rec); if (i >= 0) timers.splice(i, 1);
+        rec.fn();
+        syncMoving();
+      }, rec.ms);
     }
     function stopAuto() {
       if (!inst.auto) return;
       inst.auto = false; clearTimeout(inst.t);
       $$('.auto-press', box).forEach(function (n) { n.classList.remove('auto-press'); });
-      paintAuto();
+      paint();
     }
     function tick() {
-      if (!inst.auto) return;
+      if (!inst.auto || inst.paused) return;
       var n = api.next ? api.next() : null;
       if (n === 'wait') { inst.t = setTimeout(tick, 300); return; }
       if (!n) { stopAuto(); return; }
       n.classList.add('auto-press');
-      try { n.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: RM ? 'auto' : 'smooth' }); } catch (e) {}
+      if (inst.follow) { try { n.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: RM ? 'auto' : 'smooth' }); } catch (e) {} }
       inst.t = setTimeout(function () {
         n.classList.remove('auto-press');
-        if (!inst.auto) return;
+        if (!inst.auto || inst.paused) return;
         n.click();
         inst.t = setTimeout(tick, def.pace || 1100);
       }, RM ? 250 : 850);
     }
+    // Stop freezes everything: autoplay and the app's own pending steps. Continue picks up from the same place.
+    function pause() {
+      if (inst.paused) return;
+      inst.wasAuto = inst.auto;
+      if (inst.auto) { inst.auto = false; clearTimeout(inst.t); $$('.auto-press', box).forEach(function (n) { n.classList.remove('auto-press'); }); }
+      inst.paused = true;
+      timers.forEach(function (r) { if (r.id != null) { clearTimeout(r.id); r.id = null; r.ms = Math.max(0, r.ms - (Date.now() - r.start)); } });
+      clearTimeout(movT); movT = null;
+      paint();
+    }
+    function resume(withAuto) {
+      if (!inst.paused) return;
+      inst.paused = false; inst.follow = true;
+      timers.slice().forEach(schedule);
+      if (withAuto && inst.wasAuto) { inst.auto = true; tick(); }
+      inst.wasAuto = false;
+      inst.moving = timers.length > 0;
+      paint();
+    }
     function doReset() {
+      inst.paused = false; inst.wasAuto = false; inst.moving = false; inst.follow = true;
       ctx.clearTimers(); ctx.end(null);
       if (api.reset) api.reset();
+      syncMoving(); paint();
     }
     var ctx = {
       el: el, body: body, bar: bar, lang: lang, T: T, h: h, icon: icon, esc: esc, RM: RM,
       seg: seg, win: win, logger: logger, counters: counters,
       now: function (html) { now.innerHTML = html || ''; now.hidden = !html; },
       end: function (html) { end.innerHTML = html || ''; end.hidden = !html; },
-      later: function (fn, ms) { var t = setTimeout(fn, RM ? Math.min(ms, 80) : ms); timers.push(t); return t; },
-      clearTimers: function () { timers.forEach(clearTimeout); timers.length = 0; },
+      later: function (fn, ms) {
+        var rec = { fn: fn, ms: RM ? Math.min(ms, 80) : ms, id: null, start: 0 };
+        timers.push(rec);
+        if (!inst.paused) schedule(rec);
+        syncMoving();
+        return rec;
+      },
+      clearTimers: function () { timers.forEach(function (r) { clearTimeout(r.id); }); timers.length = 0; },
       /* reveal text gradually, like a model writing; calls done() at the end */
       type: function (node, text, done, step) {
         if (RM) { node.textContent = text; done && done(); return; }
@@ -250,7 +307,7 @@
       },
       /* on a phone the windows are stacked, so bring the part that just changed into view */
       focus: function (node) {
-        if (!node || window.innerWidth > 900) return;
+        if (!node || window.innerWidth > 900 || !inst.follow) return;
         var r = box.getBoundingClientRect();
         if (r.bottom < 0 || r.top > window.innerHeight) return;
         try { node.scrollIntoView({ block: 'center', inline: 'nearest', behavior: RM ? 'auto' : 'smooth' }); } catch (e) {}
@@ -260,19 +317,36 @@
     var api = def.mount(ctx) || {};
 
     autoBtn.addEventListener('click', function () {
-      if (inst.auto) { stopAuto(); return; }
-      inst.auto = true; paintAuto();
+      if (inst.paused) { resume(true); return; }
+      if (inst.auto) { pause(); return; }
+      inst.auto = true; inst.follow = true; paint();
       var n = api.next ? api.next() : null;
       if (!n) doReset();
+      inst.auto = true; paint();
       tick();
     });
     resetBtn.addEventListener('click', function () { stopAuto(); doReset(); });
-    /* a real click inside the demo hands control back to the visitor */
-    box.addEventListener('click', function (e) { if (e.isTrusted && inst.auto && !autoBtn.contains(e.target)) stopAuto(); }, true);
+    fStop.addEventListener('click', pause);
+    fGo.addEventListener('click', function () { resume(true); });
+    fReset.addEventListener('click', function () { stopAuto(); doReset(); });
+    // A real click on the demo itself hands control back to the visitor: autoplay stops, a paused demo goes on.
+    box.addEventListener('click', function (e) {
+      if (!e.isTrusted || autoBtn.contains(e.target) || resetBtn.contains(e.target) || floatBar.contains(e.target)) return;
+      inst.follow = true;
+      if (inst.paused) resume(false); else if (inst.auto) stopAuto();
+    }, true);
+    // Once the visitor scrolls by hand, the page stops following the action until their next press.
+    var onUserScroll = function () { if (inst.auto || timers.length) inst.follow = false; };
+    addEventListener('wheel', onUserScroll, { passive: true });
+    addEventListener('touchmove', onUserScroll, { passive: true });
     var vis = null;
     if (HAS_IO) { vis = new IntersectionObserver(function (es) { if (!es[0].isIntersecting) stopAuto(); }, { threshold: 0 }); vis.observe(box); }
 
-    el.__pf = { destroy: function () { stopAuto(); ctx.clearTimers(); if (vis) vis.disconnect(); if (api.destroy) api.destroy(); el.__pf = null; } };
+    el.__pf = { destroy: function () {
+      stopAuto(); ctx.clearTimers(); clearTimeout(movT);
+      removeEventListener('wheel', onUserScroll); removeEventListener('touchmove', onUserScroll);
+      if (vis) vis.disconnect(); if (api.destroy) api.destroy(); el.__pf = null;
+    } };
   }
 
   var lazy = HAS_IO ? new IntersectionObserver(function (es) {
